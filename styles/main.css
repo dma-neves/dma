@@ -1,0 +1,71 @@
+body
+{
+	background: rgba(20, 20, 20, 0.75);
+	font-family: 'Montserrat', sans-serif;
+}
+
+h1,h2
+{
+	color: white;
+}
+
+a
+{
+	color: black;
+}
+
+.container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -moz-transform: translateX(-50%) translateY(-50%);
+    -webkit-transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-50%) translateY(-50%);
+}
+
+.material-icons.md-48
+{
+	font-size: 48px;
+	letter-spacing: 30px;
+}
+
+.material-icons.md-36 { font-size: 36px; }
+
+.navbar
+{
+}
+
+.navbar_link
+{
+	text-decoration: none;
+}
+
+#home_button
+{
+	float:left;
+	padding-top: 10px;
+}
+#category_title
+{
+	float:left;
+}
+
+.footer
+{
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	color: white;
+	text-align: center;
+
+	font-size: 24px;
+	letter-spacing: 2px;
+	text-decoration: none;
+}
+
+.footer_link
+{
+	color: white;
+	text-decoration: none;
+}
