@@ -25,17 +25,17 @@ a
     position: absolute;
     top: 50%;
     left: 50%;
-    -moz-transform: translateX(-50%) translateY(-50%);
-    -webkit-transform: translateX(-50%) translateY(-50%);
-    transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-44%) translateY(-50%);
 }
 
 .caption {
 
     position: absolute;
-    top: 54%;
-    left: 49.2%;
-    transform: translateX(-50%) translateY(-50%);
+    /* top: 54%;
+    left: 49.2%; */
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(30px);
 
     word-spacing: 30px;
 }
