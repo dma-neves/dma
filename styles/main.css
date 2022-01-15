@@ -33,8 +33,11 @@ a
 .caption {
 
     position: absolute;
-    top: 53%;
-    left: 41%;
+    top: 54%;
+    left: 49.2%;
+    transform: translateX(-50%) translateY(-50%);
+
+    word-spacing: 30px;
 }
 
 
