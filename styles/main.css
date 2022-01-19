@@ -22,24 +22,22 @@ a
 }
 
 .container {
+
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translateX(-47%) translateY(-50%);
-    word-spacing: 4px;
+    transform: translateX(-50%) translateY(-50%);
 
 }
 
 .caption {
 
     position: absolute;
-    /* top: 54%;
-    left: 49.2%; */
-    top: 50%;
+    top: 54%;
     left: 50%;
-    transform: translateX(-50%) translateY(30px);
+    transform: translateX(-53%) translateY(-50%);
 
-    word-spacing: 30px;
+    word-spacing: 25px;
 }
 
 
