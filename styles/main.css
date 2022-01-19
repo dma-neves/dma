@@ -33,9 +33,9 @@ a
 .caption {
 
     position: absolute;
-    top: 54%;
+    top: 50%;
     left: 50%;
-    transform: translateX(-53%) translateY(-50%);
+    transform: translateX(-53%) translateY(25px);
 
     word-spacing: 25px;
 }
