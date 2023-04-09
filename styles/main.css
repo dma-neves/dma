@@ -50,7 +50,7 @@ nav a:hover {
 }
 
 h1 {
-    font-size: 2em;
+    /* font-size: 2em; */
     margin-top: 0;
 }
 
@@ -133,7 +133,7 @@ tr:nth-child(even) {
 
 .min-list li {
     margin-bottom: 10px;
-    font-size: 18px;
+    /* font-size: 18px; */
     color: #333;
     font-weight: bold;
 }
