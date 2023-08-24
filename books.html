@@ -8,6 +8,24 @@
     <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <script>
+        window.addEventListener('DOMContentLoaded', (event) => {
+            // Get the table and its tbody
+            const table = document.querySelector('table');
+            const tbody = table.querySelector('tbody');
+
+            // Loop through each row in the tbody
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                // Create a new td element for the '#' column
+                const numberCell = document.createElement('td');
+                numberCell.textContent = (index + 1).toString();
+                row.appendChild(numberCell);
+            });
+        });
+    </script>
+
 </head>
 
 <body>
@@ -39,6 +57,7 @@
                 <td>*</td>
                 <td>book</td>
                 <td>author</td>
+                <td>#</td>
             </tr>
         </thead>
         <tbody>
