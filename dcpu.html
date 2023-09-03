@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>DMA</title>
+	<link rel="stylesheet" href="styles/main.css" type = "text/css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+    <script src="scripts/main.js"></script>
+
+</head>
+
+<body>
+
+    <div class="content">
+        
+        <h1>DCPU - From Logic Gates to a Functioning Processor</h1>
+        <p>Aug 27, 2023</p>
+
+        <h2>Index</h2>
+
+        <ul>
+            <li><a href="#introduction">1. Introduction</a></li>
+            <li><a href="#background">2. Background</a></li>
+            <li><a href="#alu">3. Buliding an ALU</a></li>
+            <li><a href="#state">4. State, Memory and Clock</a></li>
+            <li><a href="#isa">5. Instruction Set Architecture</a></li>
+            <li><a href="#cu">6. Control Unit</a></li>
+            <li><a href="#firstprogram">7. Executing a Program</a></li>
+            <li><a href="#assembler">8. Assembler</a></li>
+            <li><a href="#fpga">9. FPGA</a></li>
+
+
+        </ul>
+
+        <h2 id="introduction">1. Introduction</h2>
+
+        <figure>
+            <img src="resources/eniac.jpg" width="500">
+            <figcaption>Fig.1 ENIAC 1946 (First Programmable Digital Computer)</figcaption>
+        </figure>
+
+        <p>
+            Since a long time, I've wondered how (the seemingly magical) computers worked. My first attempts at understanding these 
+            complicated machines arose during middle school while playing around with redstone in Minecraft and building simple circuits. But it's
+            fair to say, the jump from some simulated wiring in a videogame to a functional computer was a bit ambitious. Fast forward 
+            to my second year of University, and after learing about Digital Systems, Computer Architectures and Operating Systems, I 
+            felt I finally had the necessary base knowledge to make the leap. With some basic knowledge of VHDL I decided to design and implement
+            a simple ALU, and then went from there.
+        </p>
+            In this guide, I will try to guide you through the steps I went through (excluding all the original trial and error) to
+            build a primitive CPU using logic gates as the fundational building blocks. Even though VHDL allows one to design and implement complex systems
+            using high-level behavioural descriptions (that are then compiled down to logic gates), I tried to purposly avoid these features (like processes)
+            in order to achieve a deeper and more complete understanding of the inner workings of a CPU.
+        <p>
+
+        <p>
+            It's important to note that the CPU we will be bulding is in no way revolutionary, impressive or particularly well designed. Hence the
+            the name DCPU (Dumb CPU). Rather, the CPU is supposed to be as simple as possible, while still including most of the important functionalities
+            a CPU needs to be usable.
+        </p>
+
+        <p>
+            <b>Note:</b> The source code of this project can be found in my Github <a href="https://github.com/dma-neves/dcpu/">repository<a>. Also note that the original
+                project is a 16 bit CPU, while the code I provide in this document follows mostly an 8 bit design for compactness.
+        </p>
+
+        <h2 id="background">2. Background</h2>
+
+        <!--
+
+            Basic CPU, von neuman architecture
+            Logic gates
+            VHDL, FPGA
+            Tools: ghdl, altera
+        -->
+
+        <p>
+            Before diving into the implemention, we first need to establish some basic background information and concepts like the Von Nuemann Architecture,
+            transistors, logic gates, binary number representation, Hardware Description Languages and FPGAs. If you are already familiar with these concepts, skip to the next chapter.
+        </p>
+
+        <figure>
+            <img src="resources/vonneuman.jpg" width="500">
+            <figcaption>Fig.2 Von Neuman Architecture</figcaption>
+        </figure>
+
+        <p>
+            In 1945, John Von Neumann proposed an architecture for an electronic digital computer (Fig.2). This would endup becoming the basis for all computer architectures,
+            even to this day. The architecture proposes a system with the following essential components:
+            <ul>
+                <li>A CPU (Central Processing Unit) with an ALU (Arithmetic Logic Unit) and registers. A register stores a value in a set of bits.</li>
+                <li>A control unit including an instruction register and a program counter.</li>
+                <li>A memory unit that stores data and instructions.</li>
+                <li>Input and output mechanisms.</li>
+            </ul>
+
+            Our CPU will mostly follow this norm, with some small deviations. We will seperate the memory unit in a read-only unit that stores instructions and 
+            a read-write unit to store and manipulate data. This decision is a bit redundant, but makes our lives slightly easier. We will also mostly ignore IO.
+        </p>
+
+        <figure>
+            <img src="resources/logicgates.png" width="500">
+            <figcaption>Fig.3 Logic Gates</figcaption>
+        </figure>
+
+        <p>
+            Fundametally, computers are made of billions of <a href="https://en.wikipedia.org/wiki/Transistor">transistors</a>. These transistors are combined to form logic gates. With logic gates we can build any 
+            digital system, including our CPU. A logic gate takes one or two bits as input and outputs a single bit. Fig.3 shows all the basic logic gates. AND outputs
+            1 if both inputs are 1 otherwise 0, OR outputs 1 if any of the inputs is 1 and XOR outputs 1 if exactly one of the inputs is 1. The bottom three logic gates
+            are the same as the first three but followed by a NOT logic gate. A NOT logic gates that takes a single input and outputs its negation. We can combine
+            these logic gates to add two numbers represented in binary form, perform more complex arithmetic operations, store data and even implement a modern Intel or AMD CPU if we were clever enough.
+        </p>
+
+        <!-- <p>
+            Given that computers are built entirely from logic gates that only operate over bits, all numbers (and values in general) must be represented in binary
+            form. Just like we ususually represent numbers using combinations of 10 digits (0, 1, 2, ..., 9), in binary we represent numbers using combinations of just 2 digits (0 and 1).
+            The numbers from 0 to 5 are represented in binary as follows: 0, 1, 10, 11, 100, 101. From here on out, whenever we want to express numbers written in base-2, we
+            will use the prefix '0b' to easily differentiate from the base-10 notation. For example the previous numbers from 0 to 5 can be expressed as follows:
+            0b0, 0b1, 0b10, 0b11, 0b100, 0b101.
+        </p> -->
+
+        <p>
+             In order to develop our own CPU, we need to somehow create or represent a circtuit composed of these logic gates. One way would be to buy some chips with
+             logic gates and assemble them on a breadboard. Another option would be to design an manufacture an actual microchip. Given that both these
+             options don't scale very well, can cost some money and aren't very debug friendly, a more convenient and cheaper alternative is to design our circuits
+             using a harware description language like VHDL. These languages allow one to describe a digital system using code. With the VHDL code we can then simulate
+             the circuit on our computer, or "upload" it to an FPGA (Field Programmable Gate Array). An FPGA is a integrated circuit that can be configured to behave
+             as "any" circuit we want. 
+        </p>
+            Note that this guide will not include an in depth tutorial on VHDL, so even though the VHDL we'll be writing 
+            is very basic, you might want to watch some basic VHDL tutorial first. I will also assume that you have some basic knowledge of programming and concepts
+            like <a href="https://www.geeksforgeeks.org/stack-data-structure/">stacks</a>, 
+            <a href="https://www.geeksforgeeks.org/c-pointers/">pointers</a>, 
+            <a href="https://www.geeksforgeeks.org/binary-representations-in-digital-logic/">binary representation</a>, 
+            <a href="https://www.geeksforgeeks.org/bitwise-operators-in-c-cpp/">bit manipulation</a>,
+            etc.
+            In terms of tools, I personally used <a href="https://ghdl.github.io/ghdl/">ghdl</a>
+            to simulate VHDL on my computer
+            and used the <a href="https://www.intel.com/content/www/us/en/software-kit/666221/intel-quartus-ii-web-edition-design-software-version-13-1-for-windows.html">Intel Quartus II</a> 
+            software to program my ALTERA FPGA CycloneII EP2C5T144.
+        <p>
+
+        </p>
+
+        <h2 id="alu">3. Building an ALU</h2>
+
+        <!--
+            Logic Gates - vhdl
+            Logical operations
+            Adder
+            Full Adder
+            ALU
+        -->
+
+        <figure>
+            <img src="resources/alu.png" width="400">
+            <figcaption>Fig.4 Arithmetic Logic Unit</figcaption>
+        </figure>        
+
+        <p>
+            Our first step is to build an ALU (Arithmetic Logic Unit). This unit is responisble for carrying out all the math operations a CPU might need to perfrom. 
+            A simple ALU (Fig.4), takes as inputs two binary numbers (operands) and an operation code (opcode), and outputs a binary number (result) and some flags (status) that correspond to the
+            result of performing the specified operation on the input numbers.
+        </p>
+
+        <figure>
+            <img src="resources/half-adder.svg" width="250">
+            <figcaption>Fig.5 Half-Adder</figcaption>
+        </figure>                
+
+        <figure>
+            <img src="resources/full-adder.svg" width="500">
+            <figcaption>Fig.6 Full-Adder</figcaption>
+        </figure>               
+
+        <p>
+            The first operation we'll implement is addition. If we want to add two bits A and B, we can use the circuit seen in Fig.5, a half-adder. The AND gate
+            computes the carry bit and the XOR gate the result bit. If A and B are 1 then the result is 0 and the carry is 1. If A and B are 0 then the result is 0 and the carry is 0.
+            If only A or only B is 1, the result is 1 and the carry 0. To make a full-adder (Fig.6) that takes as input two bits A and B, and a carry bit Cin, we simply chain two
+            half-adders and OR the carry bits. We can implement this circuit in VHDL as follows:
+        </p>
+
+        <pre>
+            <code>
+    entity FullAdder is
+
+    Port(
+        carryIn : IN STD_LOGIC;
+        a : IN STD_LOGIC;
+        b : IN STD_LOGIC;
+        
+        result : OUT STD_LOGIC;
+        carryOut : OUT STD_LOGIC
+    );
+
+    end FullAdder;
+
+    architecture Behavioral of FullAdder is
+
+    signal result_0, carry_0, carry_1 : STD_LOGIC;
+
+    begin
+    result_0 <= a xor b;
+    carry_0 <= a and b;
+    carry_1 <= result_0 and carryIn;
+    result <= result_0 xor carryIn;
+    carryOut <= carry_0 or carry_1;
+    end Behavioral;
+            </code>
+        </pre>
+
+        <p>
+            To make an adder that adds two numbers A and B of N bits, we can use N full-adders. We add the first bits from A and B using 
+            the first full-adder, passing 0 as the carry in, then add the second bits from A and B using the second full-adder, routing the carry out from the first full-adder to
+            the carry in from the second full-adder, and so on. The following code implements an 8 bit adder:
+        </p>
+
+        <pre>
+            <code>
+    entity Adder is
+    Port(
+        a : IN STD_LOGIC_VECTOR(7 downto 0);
+        b : IN STD_LOGIC_VECTOR(7 downto 0);
+        
+        result : OUT STD_LOGIC_VECTOR(7 downto 0);
+        carryOut : OUT STD_LOGIC
+    );
+    end Adder;
+    
+    architecture Behavioral of Adder is
+    // Components code here
+    signal co_0, co_1, co_2, co_3, co_4, co_5, co_6, co_7 : STD_LOGIC;
+    
+    begin
+    S0 : FullAdder port map ('0', a(0), b(0), result(0), co_0);
+    S1 : FullAdder port map (co_0, a(1), b(1), result(1), co_1);
+    S2 : FullAdder port map (co_1, a(2), b(2), result(2), co_2);
+    S3 : FullAdder port map (co_2, a(3), b(3), result(3), co_3);
+    S4 : FullAdder port map (co_3, a(4), b(4), result(4), co_4);
+    S5 : FullAdder port map (co_4, a(5), b(5), result(5), co_5);
+    S6 : FullAdder port map (co_5, a(6), b(6), result(6), co_6);
+    S7 : FullAdder port map (co_6, a(7), b(7), result(7), co_7);
+    carryOut <= co_7;
+    end Behavioral;                
+            </code>
+        </pre>
+
+        <p>
+            Logic operations on N bit numbers are easily implemented by performing the operation (like AND, OR, NOT, etc) on all the N inputs.
+            Since they are logic operations, they are directly implemented by a single logic gate. For example an AND operation between two 8 bit numbers
+            can be implemented as follows:
+        </p>
+
+        <pre>
+            <code>
+    entity And_8 is
+    Port(
+        a : in STD_LOGIC_VECTOR(7 downto 0);
+        b : in STD_LOGIC_VECTOR(7 downto 0);
+        
+        a_and_b : out STD_LOGIC_VECTOR(7 downto 0)
+    );
+    end And_8;
+    
+    architecture Behavioral of And_8 is
+    
+    begin
+    a_and_b(0) <= a(0) and b(0);
+    a_and_b(1) <= a(1) and b(1);
+    a_and_b(2) <= a(2) and b(2);
+    a_and_b(3) <= a(3) and b(3);
+    a_and_b(4) <= a(4) and b(4);
+    a_and_b(5) <= a(5) and b(5);
+    a_and_b(6) <= a(6) and b(6);
+    a_and_b(7) <= a(7) and b(7);
+    end Behavioral;
+            </code>
+        </pre>
+        
+        <p>
+            The next challange is dealing with subtractions and negative numbers. The most popular approach to this problem
+            is using the <a href="https://en.wikipedia.org/wiki/Two%27s_complement">two's compliment</a> method. In order to be able to represent both
+            posisitive and negative values, we assume that the the binary digit with the greatest place value represents the number's sign. 0 corresponds
+            to a positive number and 1 corresponds to a negative number. Positive numbers are represented in the same way as before, while negative numbers 
+            are encoded diffirently. To represent a negative numbre in two's compliment, we use the following method:
+            <ul>
+                <li>Starting with the equivalent positive number.</li>
+                <li>Invert (or flip) all bits.</li>
+                <li>Add 1 to the entire inverted number, ignoring any overflow<,/li>
+            </ul>
+            This encoding might seem a bit odd, but it actually allows for some nice properties. Namely, adding two numbers in this representation works perfectly
+            with both negative and positive numbers. For example adding 4 (0b00000100) to -3 (0b11111101), this is 4-3, gives us 0b11111111, which encodes the value -1.
+            By adding a module to our ALU that negates a value, we can then implement subtractions by performing negations followed by additions. This is A-B is the same
+            can be implemented as A+(-B). A negation module can be implement as follows using the previous adder and an 8 bit NOT operator:
+        </p>
+
+        <pre>
+            <code>
+    entity Negate is
+    Port(
+        a : in STD_LOGIC_VECTOR(8 downto 0);
+        neg_a : out STD_LOGIC_VECTOR(8 downto 0);
+        overflow : out STD_LOGIC
+    );
+    end Negate;
+    
+    architecture Behavioral of Negate is
+    
+    // Components code here
+    signal not_a : STD_LOGIC_VECTOR(8 downto 0);
+    
+    begin
+    N: Not_8 port map(a, not_a);
+    S: Adder port map(not_a, "00000001", neg_a, overflow);
+    end Behavioral;           
+            </code>
+        </pre>
+
+
+        <figure>
+            <img src="resources/multiplexer.svg" width="300">
+            <figcaption>Fig.7 Multiplexer</figcaption>
+        </figure>  
+
+        <p>
+            The final piece we need to build the ALU is a multiplexer. A multiplexer is a component that receives a set of inputs I0, I1, ..., IN
+            (each input can be a single bit or binary values) and a selector S, and outputs the value In, where n is the index selected by S. This is,
+            if S is 0b0 the output is I0, if S is 0b1 the output is I1, if S is 0b10 the output is I2 and so on. Such a component can be easily implemented
+            using AND gates connecting each input I with the necessary S value (NOT gates used for the bits that should be zero) and a final OR gate
+            combining all the intermediate outputs. Fig.7 shows a multiplexer circuit with 4 input values and a two bit selector S. Note that in such a diagram a
+            circle preciding a gate's input represents that the input is flipped (NOT gate). This multiplexer can be implemented as follows:
+        </p>
+
+        <pre>
+            <code>
+    entity Mux4 is
+    Port(
+        I0, I1, I2, I3 : in STD_LOGIC_VECTOR(8 downto 0);
+        sel : in STD_LOGIC_VECTOR(1 downto 0);
+        o : out STD_LOGIC_VECTOR(8 downto 0)
+    );
+    end Mux4;
+    
+    architecture Behavioral of Mux4 is
+    signal I0_s, I1_s, I2_s, I3_s : STD_LOGIC_VECTOR(8 downto 0);
+    begin
+    
+    I0_s(0) <= I0(0) and (not sel(0)) and (not sel(1));
+    //I0_s(...) <= ...
+    I0_s(8) <= I0(8) and (not sel(0)) and (not sel(1));
+    
+    I1_s(0) <= I1(0) and (not sel(0)) and sel(1);
+    //I1_s(...) <= ...
+    I1_s(8) <= I1(8) and (not sel(0)) and sel(1);
+    
+    I2_s(0) <= I2(0) and sel(0)) and (not sel(1));
+    //I2_s(...) <= ...
+    I2_s(8) <= I2(8) and sel(0)) and (not sel(1));
+    
+    I3_s(0) <= I3(0) and sel(0)) and sel(1);
+    //I3_s(...) <= ...
+    I3_s(8) <= I3(8) and sel(0)) and sel(1);
+    
+    end Behavioral;                
+            </code>
+        </pre>
+
+        <p>
+            With an adder, logic operators, a negator and some multiplexers, we can finally build our ALU. Lets consider that the ALU will support 8 different
+            operations. Our opcode will therefore be specified by a 3 bit value (since 2^3 = 8). Tab.1 shows the 8 operations.
+        </p>
+
+        <figure>
+            <table border="1">
+
+                <thead>
+                    <tr>
+                        <th>Opcode</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>000</td>
+                        <td>add</td>
+                        <td>A + B</td>
+                    </tr>
+                    <tr>
+                        <td>001</td>
+                        <td>sub</td>
+                        <td>A - B</td>
+                    </tr>
+                    <tr>
+                        <td>010</td>
+                        <td>inc</td>
+                        <td>A + 1</td>
+                    </tr>
+                    <tr>
+                        <td>011</td>
+                        <td>dec</td>
+                        <td>A - 1</td>
+                    </tr>
+                    <tr>
+                        <td>100</td>
+                        <td>neg</td>
+                        <td>-A</td>
+                    </tr>
+                    <tr>
+                        <td>101</td>
+                        <td>not</td>
+                        <td>~A</td>
+                    </tr>
+                    <tr>
+                        <td>110</td>
+                        <td>and</td>
+                        <td>A ^ B</td>
+                    </tr>
+                    <tr>
+                        <td>111</td>
+                        <td>or</td>
+                        <td>A v B</td>
+                    </tr>
+                </tbody>
+            </table>
+            <figcaption>Tab.1 ALU opcodes</figcaption>
+        </figure>
+        
+        <p>
+            Fig.8 shows a diagram of the ALU that implements these 8 operations. It receives two 8 bit input operands A and B as well as an input opcode. For
+            output, we have a single 8 bit result and three flags: overflow, negative and zero.
+            The ALU contains the Adder, Negate, NOT, OR and AND components we
+            discussed earlier, a set of multiplexers and some auxiliary gates. The first operand of the Adder is always A, while the second is selected by a multiplexer
+            that can either select B (add), 1 (inc), -1 (dec) or the result of the Negate component (sub). The Negate input is selected by a multiplexer that can either
+            select A (neg) or B (sub). All the other components simply operate over A and B (operations: not, and, or). The final result is selected by a multiplexer
+            that can either select the Negate output (neg), the NOT output (not), the AND output (and), the OR output (or) or the Adder output (operations: add, inc, dec, sub).
+            The overflow flag can be set either by the Adder component or the Negate component, and the negative and zero flag simply check if the result is negative or
+            zero.
+        </p>
+        
+        <p>
+            <b>Notes:</b> In this circuit there are actually two adders given that there is
+            also an adder embedded in the Negate module. We could refine the design and share a single Adder for both purposes, but this solution
+            is slightly more convenient and allows us to implement the subtraction operation easily. The negation performed on the selector of Mux5
+            is somewhat unecessary. It is present in this schematic just to achieve a more convenient layout of the inputs.
+        </p>
+        
+        <figure>
+            <img src="resources/alu.svg" width="600">
+            <figcaption>Fig.8 ALU Schematic</figcaption>
+        </figure>  
+
+        <p>
+            This ALU can be implemented in VHDL as follows:
+        </p>
+
+        <pre>
+            <code>
+    entity ALU is
+
+    Port (
+        a : IN STD_LOGIC_VECTOR(8 downto 0);
+        b : IN STD_LOGIC_VECTOR(8 downto 0);
+        opc : IN STD_LOGIC_VECTOR(2 downto 0);
+        
+        result : OUT STD_LOGIC_VECTOR(8 downto 0);
+        zeroF : OUT STD_LOGIC;
+        negativeF : OUT STD_LOGIC;
+        overflowF : OUT STD_LOGIC
+    );
+    end ALU;
+    
+    architecture Behavioral of ALU is
+    
+    signal isc, iac, inc, addC, negOF, overf, carry : STD_LOGIC;
+    signal opc_2 : STD_LOGIC_VECTOR(1 downto 0);
+    signal opc_M5 : STD_LOGIC_VECTOR(2 downto 0);
+    signal om4, om2, om5, addR, negA, notA, andAB, orAB : STD_LOGIC_VECTOR(8 downto 0);
+    
+    // Components code here
+    
+    begin
+    isc <= (not opc(0)) and (not opc(1)) and opc(2)        // Is Sub Code (001)
+    iac <= (not opc(0)) and (not opc(1)) and (not opc(2))  // Is Add Code (000)
+    inc <= opc(0) and (not opc(1)) and (not opc(2))        // Is Neg Code (100)
+
+    
+    opc_2(0) <= opc(0);
+    opc_2(1) <= opc(1);
+    
+    MUX4_M: Mux4 port map (B, negA, "00000001", "11111111", opc_2, om4);
+    MUX2_M: Mux2 port map (A, B, isc, om2);
+    
+    ADDER_M: Adder port map(A, om4, addR, addC);
+    NEGATE_M: Negate port map(om2, negA, negOF);
+    NOT_M: Not_8 port map(A, notA);
+    AND_M: And_8 port map(a, b, andAB);
+    OR_M: Or_8 port map(a, b, orAB);
+    
+    opc_M5(0) <= opc(0);
+    opc_M5(1) <= opc(1);
+    opc_M5(2) <= not opc(2);
+    
+    MUx5_M: Mux5 port map (negA, notA, andAB, orAB, addR, opc_M5, om5);
+    
+    IS_NEGATIVE_M: isNegative port map (om5, negativeF);
+    IS_ZERO_M: isZero port map (om5, zeroF);
+    
+    carry <= addC and iac;
+    overf <= negOF and inc;
+    overflowF <= carry or overf;
+    
+    result <= om5;
+    end Behavioral;                
+            </code>
+        </pre>
+        
+        <h2 id="state">4. State, Memory and Clock</h2>
+
+        <!--
+            Flip-Flops
+            Register
+            Memory
+        -->
+
+        <figure style="display: inline-block; margin-right: 20px;">
+            <img src="resources/sr_flip_flop.svg" width="300">
+            <figcaption>Fig.9 SR Flip-Flop</figcaption>
+        </figure>
+        
+        <figure style="display: inline-block;">
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>S</th>
+                        <th>R</th>
+                        <th>Qn+1</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>Qn</td>
+                    </tr>
+                    <tr>
+                        <td>0</td>
+                        <td>1</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>0</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>Indeterminate</td>
+                    </tr>
+                </tbody>
+            </table>
+            <figcaption>Tab.2 SR Flip-Flop Truth Table</figcaption>
+        </figure>
+        
+
+        <p>
+            With the ALU built, we can now perform "all" the operations we need. However, we need some way to store the results of these operations and data in general. 
+            Fortunately, some smart physicists in the early 20th century found a way to store information using circuits, called multi-vibrators, that can easily be reproduced 
+            using transistor-based logic gates. Fig.9 shows the schematic of a SR Flip-Flop. A SR Flip-Flop stores a state Q (Q' is equal to ~Q) and provides two inputs
+            to set the state (Q = 1) and reset the state (Q = 0). Considering that the Flip-Flop is in the current state Qn, Tab.2 presents its truth table. Given that the
+            NOR gate's output is only 1 when both outputs are 0, we can see that if Q is 1 and Q' is 0, setting S to 1 results in Q chaning to 0 and therefore Q' to 1. While 
+            setting R to 0 results in Q' chaging to 1 and therefore Q to 0. If this doesn't seem clear, Ben Eater has a great comprehensive <a href="https://www.youtube.com/watch?v=KM0DdEaY5sY&t=241s">video</a> 
+            on this circuit alone.
+        </p>
+
+        <figure>
+            <img src="resources/clock.jpg" width="400">
+            <figcaption>Fig.10 Clock Signal</figcaption>
+        </figure>
+
+        <p>
+            Given that usually computer programs must perform a sequence of instructions, and not just a single operation, CPUs need a mechanism to sequence these
+            instructions. This is where the clock comes in. Inside every computer is a clock generator, usually a crystal oscillator, that generates a pulse (or voltage)
+            at even intervals as seen in Fig.10. The CPU can then use this clock to perform an instruction step on each clock cycle (More information on this in chapter 6). This means that
+            state changes inside a CPU must also occur synchronously with the clock. Ideally, the state of a Flip-Flop inside a CPU, should only be updated during a clock pulse
+            (a change of signal from 0 to 1, or from 1 to 0) to eliminate any glitches related to signal propagation delays.
+        </p>
+
+        <figure style="display: inline-block; margin-right: 20px;">
+            <img src="resources/d_flip_flop.svg" width="400">
+            <figcaption>Fig.11 D Flip-Flop</figcaption>
+        </figure>
+        
+        <figure style="display: inline-block;">
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>D</th>
+                        <th>En</th>
+                        <th>Qn+1</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>0</td>
+                        <td>1</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>1</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>X</td>
+                        <td>0</td>
+                        <td>Qn</td>
+                    </tr>   
+                </tbody>    
+            </table>
+            <figcaption>Tab.3 D Flip-Flop Truth Table</figcaption>
+        </figure>        
+
+        <p>
+            Fig.11 shows the schematic for a D Flip-Flop. This Flip-Flop is similar to the
+            previous one, but receives an enable signal as input, which can be connected to the clock signal (or connected to an AND gate with the clock signal) to ensure that any state changes issued to the Flip-Flop 
+            are only triggered during a clock pulse*. It also combines the previous S and R inputs into
+            a single Data input. Tab.3 presents the D Enable Flip-Flop's truth table. 
+            <!-- Considering the enable input is connected to an AND gate with a clock signal, it can be used as follows: 
+            the Flip-Flop initially stores some state and is disabled. Whenever we want to update its state,
+            we enable it and feed it the new data/state we want it to store. Then during the clock pulse* the update is triggered, and finally we disable it again.
+         -->
+        </p>
+
+        <p>
+            Note the asteriscs I added when mentioning the clock pulse in the previous paragraph. This circuit does not in fact trigger the update during a clock pulse, but rather, allows updates
+            whenever the clock is set to 1. We can refine the Flip-Flop to only trigger during a clock pulse by utilizing a master-slave Flip-Flop system. We won't get into details
+            on how a master-slave Flip-Flop works, but it basically involves chaining two Flip-Flops and using the first's input as the second's enable input. Ben Eater has a great 
+            <a href="https://www.youtube.com/watch?v=rXHSB5w7CyE&t=380s">video</a>
+            going through a master-slave JK Flip-Flop if you're interested (and also a <a href="https://www.youtube.com/watch?v=F1OC5e7Tn_o">video</a> on JK Flip-Flops).
+            Given that implementing one of these Flip-Flops manually (using logic) in VHDL can be prone to latching bugs, we will make an exception, and implement the D 
+            Flip-Flop using a VHDL process. This Flip-Flop includes a reset input which just sets the input to zero, and an enable input which sets Q to the
+            input data D whenever there is a pulse from 0 to 1:
+        </p>
+
+        <pre>
+            <code>
+    entity DFlipFlop is
+
+    Port(
+        D, En, R : in STD_LOGIC;
+        Q : OUT STD_LOGIC
+    );
+    
+    end DFlipFlop;
+    
+    architecture Behavioral of DFlipFlop is
+    
+    begin
+    
+        process (D, En, R) begin
+            if(R = '1') then
+            Q <= '0';
+            elsif (En'event and En = '1') then
+            Q <= D;
+            end if;
+        end process; 
+    
+    end Behavioral;
+            </code>
+        </pre>
+
+        <p>
+            With a D Flip-Flop, implementing an 8-bit register is trivial. We simply use a D Flip-Flop per bit to store the 8-bit value.
+            We can implement an 8-bit register in VHDL as follows:
+        </p>
+
+        <pre>
+            <code>
+    entity Register_8b is
+    Port(
+        En, R : in STD_LOGIC;
+        DIn : in STD_LOGIC_VECTOR(7 downto 0);
+        DOut : out STD_LOGIC_VECTOR(7 downto 0)
+    );
+    end Register_8b;
+    
+    architecture Behavioral of Register_8b is
+    // Components code here
+    begin
+        DFF_0: DFlipFlop port map (DIn(0), En, R, DOut(0));
+        DFF_1: DFlipFlop port map (DIn(1), En, R, DOut(1));
+        DFF_2: DFlipFlop port map (DIn(2), En, R, DOut(2));
+        DFF_3: DFlipFlop port map (DIn(3), En, R, DOut(3));
+        DFF_4: DFlipFlop port map (DIn(4), En, R, DOut(4));
+        DFF_5: DFlipFlop port map (DIn(5), En, R, DOut(5));
+        DFF_6: DFlipFlop port map (DIn(6), En, R, DOut(6));
+        DFF_7: DFlipFlop port map (DIn(7), En, R, DOut(7));
+    end Behavioral;
+            </code>
+        </pre>
+
+        <p>
+            A memory module can be implemented as a large array of registers. In a memory module, each register must be accessible by an address.
+            The first register can be set to address 0b00000000, the second register to address 0b00000001 and so on. This addressing system can be
+            achieved by connecting the registers to a large demultiplexer. A demultiplexer implements the inverse operation of a multiplexer. With a
+            slector (the address), the demultiplexer routs an input value to one of the N outputs (N registers for example). Note that there are more efficient 
+            (using less logic gates) of implementing a memory module. Since the focus of this project is the implementation of a CPU, and not necessarily memory
+            modules, I implemented the 
+            <a href="https://github.com/dma-neves/dcpu/blob/main/src/Memory/RAM64.vhd">RAM</a> and 
+            <a href="https://github.com/dma-neves/dcpu/blob/main/src/Memory/ROM.vhd">ROM</a> 
+            modules using VHDL processes.
+        </p>
+        
+        <h2 id="isa">5. Instruction Set Architecture </h2>
+
+        <!--
+            Turing completeness and basic type of instructions for a CPU.
+            Need for stack support
+            Componentes: registers, memory, ALU, CU 
+            why we need seperate registers for accumulators
+            why we need address register
+            ISA
+        -->
+
+        <figure>
+            <img src="resources/cpu.png" width="600">
+            <figcaption>Fig.12 CPU schematic</figcaption>
+        </figure>        
+
+        <p>
+            Now that we are able to perform operations and store and manipulate state, its time to define our CPU's architecture as well as its
+            ISA (Instruction Set Architecture). A CPU's ISA, is simply the set of instructions it supports. As we discussed in chapter 1, following
+            the Von Neumann architecture, our CPU should include a CPU, a memory module, a set of registers and a control unit. Fig.12 shows the
+            schematic of the CPU we aim to build. It contains a control unit, two memory modules (a ROM to store a program and a RAM to store data),
+            the ALU we implemented previously, a set of registers, and a set of multiplexers and <a href="https://www.electronics-tutorials.ws/combination/comb_3.html">demultiplexers</a> (inverse multiplexer).
+            
+            In terms of registers, the CPU will have 8 general purpose registers (RA, RB, ..., RH), used to store temporary values during a program's execution, and 7
+            specialized registers:
+
+            <ul>
+                <li>IC: Instruction Counter saves the address of the current instruction being executed.</li>
+                <li>IR: Instruction Restister saves the instruction (the opcode) being executed.</li>
+                <li>IDR: Instruction Data Register saves the data associated to the instruction being executed (more on this on chapter 6).</li>
+                <li>ADR: Address Register saves an address that can be used to address the memory modules or to jump to the specified address/instruction.</li>
+                <li>IACR: Instruction Accumulator Register saves the result of the ALU from an operation triggered by the instruction being executed.</li>
+                <li>PACR: Program Accumulator Register saves the result of the ALU during a program counter increment (more on this on chapter 6).</li>
+                <li>FLAGR: Flag Register saves the values of the flag values from the ALU.</li>
+            </ul>
+        </p>
+
+        <p>
+            With this architecture in mind, we can now define an ISA. For our CPU to be usable it needs to be at the very least Turing complete.
+            Turing completeness refers to a system's ability to perform any computation that a <a href="https://en.wikipedia.org/wiki/Turing_machine">Turing machine</a>,
+            allowing it to perform virtually any computation. In practice this requires our ISA to support conditional branches, some iteration mechanism and memory
+            manipulation. We can achieve this by combining our ALU operations with some load and move operations to move data between registers and memory, a jump 
+            operation (jump to a specific instruction or address) and some conditional jump operations. 
+        </p>
+            
+        <p>
+            Additionally, as programs get more complex, having a stack becomes
+            pretty essential, and for this reason, we will also include some basic support for a stack. Register RH will be used as the stack pointer, and we'll include
+            an operation to subtract a value directly from it (usefull when addressing variables stored in the stack). 
+            
+        </p>
+            
+        <p>
+            Finally, some instructions require some data to
+            be specified alongside the instruction. For example to subtract a value from the stack pointer, we need to pass a value alongside the instruction.
+            We could reserve some of the instruction bits for data, but for convenience we will pass this data seperately.
+            This is not very efficient, since in the ROM module (that stores the program), instead of storing each instruction in a single address line, we will require 2
+            address lines, one for the instruction and one for the instruction data. We could improve this, but for the sake of simplicitly we will trade some memory efficiency for
+            a simpler design. The ISA we will use for our CPU is the following (considering an 8-bit architecture):
+        </p>
+
+        <figure>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>code</th>
+                        <th>instruction</th>
+                        <th>data</th>
+                        <th>description</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+        
+                    <tr>
+                        <td>0</td>
+                        <td>0b00000000</td>
+                        <td>add RX RY</td>
+                        <td style="white-space: nowrap;">X | (Y >> 0x4)</td>
+                        <td>Adds the values in registers RX and RY</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>0b00000001</td>
+                        <td>sub RX RY</td>
+                        <td>X | (Y >> 0x4)</td>
+                        <td>Subtracts the value in register RY from RX</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>0b00000010</td>
+                        <td>ssp $V</td>
+                        <td>V</td>
+                        <td>Subtract V from the stack pointer</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>0b00000011</td>
+                        <td>inc RX</td>
+                        <td>X</td>
+                        <td>Increments the value in register RX by 1</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>0b00000100</td>
+                        <td>dec RX</td>
+                        <td>X</td>
+                        <td>Decrements the value in register RX by 1</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>0b00000101</td>
+                        <td>neg RX</td>
+                        <td>X</td>
+                        <td>Negates (complements) the value in register RX</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>0b00000110</td>
+                        <td>not RX</td>
+                        <td>X</td>
+                        <td>Performs bitwise NOT operation on the value in register RX</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>0b00000111</td>
+                        <td>and RX RY</td>
+                        <td>X | (Y >> 0x4)</td>
+                        <td>Performs bitwise AND operation between values in registers RX and RY</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>0b00001000</td>
+                        <td>or RX RY</td>
+                        <td>X | (Y >> 0x4)</td>
+                        <td>Performs bitwise OR operation between values in registers RX and RY</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>0b00001001</td>
+                        <td>lod $V ADR</td>
+                        <td>V</td>
+                        <td>Loads the value V into register ADR</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>0b00001010</td>
+                        <td>str $V [ADR]</td>
+                        <td>V</td>
+                        <td>Stores the value V to the memory address [ADR]</td>
+                    </tr>
+                    <tr>
+                        <td>11</td>
+                        <td>0b00001011</td>
+                        <td>ld [ADR] RX</td>
+                        <td>X</td>
+                        <td>Loads the value at memory address [ADR] into register RX</td>
+                    </tr>
+                    <tr>
+                        <td>12</td>
+                        <td>0b00001100</td>
+                        <td>str RX [ADR]</td>
+                        <td>X</td>
+                        <td>Stores the value in register RX to the memory address [ADR]</td>
+                    </tr>
+                    <tr>
+                        <td>13</td>
+                        <td>0b00001101</td>
+                        <td>lod RX ADR</td>
+                        <td>X</td>
+                        <td>Loads the value in register RX to the register ADR</td>
+                    </tr>
+                    <tr>
+                        <td>14</td>
+                        <td>0b00001110</td>
+                        <td>lod ACR RX</td>
+                        <td>X</td>
+                        <td>Load the value in the accumulator ACR to the register RX</td>
+                    </tr>
+                    <tr>
+                        <td>15</td>
+                        <td>0b00001111</td>
+                        <td>lod ACR ADR</td>
+                        <td></td>
+                        <td>Load the value in the accumulator ACR to the register ADR</td>
+                    </tr>
+                    <tr>
+                        <td>16</td>
+                        <td>0b00010000</td>
+                        <td>str ACR [ADR]</td>
+                        <td></td>
+                        <td>Stores the value in the accumulator ACR to the memory address [ADR]</td>
+                    </tr>
+                    <tr>
+                        <td>17</td>
+                        <td>0b00010001</td>
+                        <td>str IC [ADR]</td>
+                        <td></td>
+                        <td>Stores the value of the IC to the memory address [ADR]</td>
+                    </tr>
+                    <tr>
+                        <td>18</td>
+                        <td>0b00010010</td>
+                        <td>jmp ADR</td>
+                        <td></td>
+                        <td>Unconditionally jumps to the memory address ADR</td>
+                    </tr>
+                    <tr>
+                        <td>19</td>
+                        <td>0b00010011</td>
+                        <td>jmp A</td>
+                        <td>A</td>
+                        <td>Unconditionally jumps to address A</td>
+                    </tr>
+                    <tr>
+                        <td>20</td>
+                        <td>0b00010100</td>
+                        <td>jmpz A</td>
+                        <td>A</td>
+                        <td>Jumps to the address A if the zero flag is set</td>
+                    </tr>
+                    <tr>
+                        <td>21</td>
+                        <td>0b00010101</td>
+                        <td>jmpn A</td>
+                        <td>A</td>
+                        <td>Jumps to the address A if the negative flag is set</td>
+                    </tr>
+                    <tr>
+                        <td>22</td>
+                        <td>0b00010110</td>
+                        <td>jmpo A</td>
+                        <td>A</td>
+                        <td>Jumps to the address A if the overflow flag is set</td>
+                    </tr>
+                    <tr>
+                        <td>23</td>
+                        <td>0b00010111</td>
+                        <td>hlt</td>
+                        <td></td>
+                        <td>Halts the execution of the program</td>
+                    </tr>
+                </table>
+            </tbody>
+            <figcaption>Tab.4 Instruction Set Architecture</figcaption>
+        </figure>
+        
+
+        <h2 id="cu">6. Control Unit</h2>
+
+        <!--
+            Clock
+            State machine (fetch, decode, execute)
+            ...
+            vhdl code
+        -->
+
+        <figure>
+            <img src="resources/CU.png" width="550">
+            <figcaption>Fig.13 Control Unit</figcaption>
+        </figure>     
+
+        <h2 id="firstprogram">7. Executing a Program</h2>
+
+        <h2 id="assebler">8. Assembler</h2>
+
+        <h2 id="fpga">9. FPGA</h2>
+
+        <figure>
+            <img src="resources/fpga.jpg" width="450">
+            <figcaption>Fig.# FPGA board</figcaption>
+        </figure>
+
+    </div>
+
+
+</body>
+
+</html>

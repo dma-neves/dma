@@ -9,46 +9,18 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
-    <script>
-        window.addEventListener('DOMContentLoaded', (event) => {
-            // Get the table and its tbody
-            const table = document.querySelector('table');
-            const tbody = table.querySelector('tbody');
-
-            // Loop through each row in the tbody
-            const rows = tbody.querySelectorAll('tr');
-            rows.forEach((row, index) => {
-                // Create a new td element for the '#' column
-                const numberCell = document.createElement('td');
-                numberCell.textContent = (index + 1).toString();
-                row.appendChild(numberCell);
-            });
-        });
-    </script>
+    <script src="scripts/main.js"></script>
 
 </head>
 
 <body>
-	<!-- <header>
-		<a href="index.html" class="header-title">DMA-NEVES</a>
-	</header> -->
-
-	<nav>
-        <a href="index.html">Home</a>
-		<a href="https://www.github.com/dma-neves">Dev</a>
-		<a href="projects.html">Projects</a>
-		<a href="posts.html">Posts</a>
-		<a href="content.html">Content</a>
-		<a href="lists.html">Lists</a>
-		<a href="contacts.html">Contacts</a>
-	</nav>
 
     <div class="content">
         <h1>Films</h1>
 
         <div>
 
-            <table>
+            <table class="numbered_table">
                 <thead>
                     <tr>
                         <td>**</td>
