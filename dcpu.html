@@ -46,14 +46,14 @@
         <p>
             Since a long time, I've wondered how (the seemingly magical) computers worked. My first attempts at understanding these 
             complicated machines arose during middle school while playing around with redstone in Minecraft and building simple circuits. But it's
-            fair to say, the jump from some simulated wiring in a videogame to a functional computer was a bit ambitious. Fast forward 
-            to my second year of University, and after learing about Digital Systems, Computer Architectures and Operating Systems, I 
+            fair to say, the jump from some simulated wiring in a video game to a functional computer was a bit ambitious. Fast forward 
+            to my second year of University, and after learning about Digital Systems, Computer Architectures and Operating Systems, I 
             felt I finally had the necessary base knowledge to make the leap. With some basic knowledge of VHDL I decided to design and implement
             a simple ALU, and then went from there.
         </p>
             In this guide, I will try to guide you through the steps I went through (excluding all the original trial and error) to
-            build a primitive CPU using logic gates as the fundational building blocks. Even though VHDL allows one to design and implement complex systems
-            using high-level behavioural descriptions (that are then compiled down to logic gates), I tried to purposly avoid these features (like processes)
+            build a primitive CPU using logic gates as the foundational building blocks. Even though VHDL allows one to design and implement complex systems
+            using high-level behavioral descriptions (that are then compiled down to logic gates), I tried to purposely avoid these features (like processes)
             in order to achieve a deeper and more complete understanding of the inner workings of a CPU.
         <p>
 
@@ -747,13 +747,13 @@
             specialized registers:
 
             <ul>
-                <li>IC: Instruction Counter saves the address of the current instruction being executed.</li>
-                <li>IR: Instruction Restister saves the instruction (the opcode) being executed.</li>
-                <li>IDR: Instruction Data Register saves the data associated to the instruction being executed (more on this on chapter 6).</li>
-                <li>ADR: Address Register saves an address that can be used to address the memory modules or to jump to the specified address/instruction.</li>
-                <li>IACR: Instruction Accumulator Register saves the result of the ALU from an operation triggered by the instruction being executed.</li>
-                <li>PACR: Program Accumulator Register saves the result of the ALU during a program counter increment (more on this on chapter 6).</li>
-                <li>FLAGR: Flag Register saves the values of the flag values from the ALU.</li>
+                <li><b>IC:</b> Instruction Counter saves the address of the current instruction being executed.</li>
+                <li><b>IR:</b> Instruction Restister saves the instruction (the opcode) being executed.</li>
+                <li><b>IDR:</b>Instruction Data Register saves the data associated to the instruction being executed (more on this on chapter 6).</li>
+                <li><b>ADR:</b>Address Register saves an address that can be used to address the memory modules or to jump to the specified address/instruction.</li>
+                <li><b>IACR:</b>Instruction Accumulator Register saves the result of the ALU from an operation triggered by the instruction being executed.</li>
+                <li><b>PACR:</b>Program Accumulator Register saves the result of the ALU during a program counter increment (more on this on chapter 6).</li>
+                <li><b>FLAGR:</b>Flag Register saves the values of the flag values from the ALU.</li>
             </ul>
         </p>
 
@@ -967,6 +967,21 @@
             </tbody>
             <figcaption>Tab.4 Instruction Set Architecture</figcaption>
         </figure>
+
+        <p>
+
+            In terms of the selectors and enablers of the various components of our CPU, all of them are controlled by the control unit, except for a few.
+
+            Note that many of our instructions operate over general purpose registers RX and RY. The indices X and Y are both passed in the instruction data.
+            Index X is stored in the first 4 bits (or 8 bits in case of a 16 bit architecture) of the instruction data and index Y in the last 4 bits (or 8 bits).
+            The 8 registers are aggregated into a single block like we can see in Fig.12. We use a demultiplexer when we want to update the state of a specific register, 
+            and two multiplexer to route the value of specific registers to the rest of the CPU. The first operation (update the state of a register) is always performed
+            on index X (load instructions are always performed over RX). This means that the selector of the multiplexer is simply directly wired to the first 4 bits of 
+            the IDR (Instruction Data Register).
+            For the second operation (routing the output of a register to the rest of the CPU) we need to consider routing both the RX and RY registers to deal
+            with instructions that operate over two operands, like <code>add RX RY</code>. This means that the selector of the multiplexer on the left is wired to the
+            first 4 bits of the IDR, and the multiplexer on the right is wired to the last 4 bits of the IDR.
+        </p>
         
 
         <h2 id="cu">6. Control Unit</h2>
@@ -977,11 +992,281 @@
             ...
             vhdl code
         -->
-
         <figure>
             <img src="resources/CU.png" width="550">
             <figcaption>Fig.13 Control Unit</figcaption>
-        </figure>     
+        </figure>
+
+        <p>
+            The last piece of the puzzle is the Control Unit which orchestrates all the other components of the CPU. It takes
+            a clock signal as input and performs an instruction step on each clock cycle. An instruction can usually be split into three
+            logical steps: fetch (get the instruction from memory), decode (decode the instruction) and execute (trigger the inputs of the
+            other components of the CPU). In our CPU, each instruction will be composed of 7 steps:
+
+            <ol>
+                <li><b>Fetch instruction:</b> Fetch the instruction stored in the memory address [IC] in the ROM module.</li>
+                <li><b>Increment IC:</b> Increment the value stored in the register IC using the ALU.</li>
+                <li><b>Load increment:</b> Load the value of the previous increment, that is stored int the IACR register, to the IC register.</li>
+                <li><b>Fetch instruction data:</b> Fetch the instruction data stored in the memory address [IC] in the ROM module.</li>
+                <li><b>Decode and execute:</b> Decode the instruction and execute it by triggering the inputs of the required components.</li>
+                <li><b>Increment IC:</b> Same as 2.</li>
+                <li><b>Load increment:</b> Same as 3.</li>
+            </ol>
+
+
+            <figure>
+                <img src="resources/seven_state_sm.png" width="550">
+                <figcaption>Fig.14 Seven-State State Machine</figcaption>
+            </figure>
+
+            To perform these steps, the control unit needs a seven-state state machine that loops indefinitely (until the hlt instruction is executed). 
+            A state machine can easily implemented using D Flip-Flops. In this case using 7 D Flip-Flops, and 1 D Flip-Flop that resets to 1 instead of 0.
+            Fig.14 shows the schematic for this state machine. Initially the state machine is reset, which results in all Flip-Flops to be set to 0
+            except the yellow one which is reset to 1. In the next clock cycle the yellow Flip-Flop is set to 0 given its input data is 0. The first
+            green Flip-Flop is set to 1 given that the previous state of the yellow Flip-Flop, which is connected to the green Flip-Flop's input data, was 1.
+            In the second clock cycle, the second green Flip-Flop's state changes to 1 and the first goes back to 0, this cycle continues until the
+            seventh state, at which point its output loops back to the first green Flip-Flop's input data. We can implement this circuit in VHDL as follows:
+        </p>
+
+        <pre>
+            <code>
+    entity SevenState_sm is
+    Port(
+        clk : in STD_LOGIC;
+        reset : in STD_LOGIC;
+        
+        S0, S1, S2, S3, S4, S5, S6 : out STD_LOGIC
+    );
+    end SevenState_sm;
+    
+    architecture Behavioral of SevenState_sm is
+    
+    // Components code here
+    
+    signal
+    DFFS_D, DFFS_Q,
+    DFF0_D, DFF0_Q,
+    DFF1_D, DFF1_Q,
+    DFF2_D, DFF2_Q,
+    DFF3_D, DFF3_Q,
+    DFF4_D, DFF4_Q,
+    DFF5_D, DFF5_Q,
+    DFF6_D, DFF6_Q : STD_LOGIC;
+    
+    begin
+    DFFS_D <= '0';
+    DFF0_D <= DFF6_Q or DFFS_Q;
+    DFF1_D <= DFF0_Q;
+    DFF2_D <= DFF1_Q;
+    DFF3_D <= DFF2_Q;
+    DFF4_D <= DFF3_Q;
+    DFF5_D <= DFF4_Q;
+    DFF6_D <= DFF5_Q;
+    
+    DFFS: DFlipFlopRA port map (DFFS_D, clk, reset, DFFS_Q);
+    DFF0: DFlipFlop port map (DFF0_D, clk, reset, DFF0_Q);
+    DFF1: DFlipFlop port map (DFF1_D, clk, reset, DFF1_Q);
+    DFF2: DFlipFlop port map (DFF2_D, clk, reset, DFF2_Q);
+    DFF3: DFlipFlop port map (DFF3_D, clk, reset, DFF3_Q);
+    DFF4: DFlipFlop port map (DFF4_D, clk, reset, DFF4_Q);
+    DFF5: DFlipFlop port map (DFF5_D, clk, reset, DFF5_Q);
+    DFF6: DFlipFlop port map (DFF6_D, clk, reset, DFF6_Q);
+    
+    S0 <= DFF0_Q;
+    S1 <= DFF1_Q;
+    S2 <= DFF2_Q;
+    S3 <= DFF3_Q;
+    S4 <= DFF4_Q;
+    S5 <= DFF5_Q;
+    S6 <= DFF6_Q;
+    end Behavioral;
+            </code>
+        </pre>
+
+        <p>
+            With the state machine built, we can now build our control unit to operate based on the output of the state machine's state.
+            Fig.13 shows the control unit we'll build. As you can see it is composed of four main components: 
+            <ul>
+                <li>
+                    The state machine we just built to differentiate each instruction step.
+                </li>
+                <li>
+                    The instruction decoder which is just a demultiplexer using the opcode as the input selector and
+                    outputting a bit per instruction (the bit corresponding to the decoded instruction is set to 1 and the rest to 0).
+                </li>
+                <li>
+                    The operation decoder which
+                    receives as input the decoded instruction and relevant flags, and outputs the operations that need to be preformed on the CPU like enabling a register, selecting
+                    a specific input from a multiplexer, selecting a specific output from a demultiplexer, enable writes to the RAM module, or selecting a operation
+                    to perform on the ALU.
+                </li>
+                <li>
+                    Finally, the select and synchronize operations isn't actually a component, but rather a logical aggregation of operations that are performed
+                    directly in the control unit module. This "module" triggers the necessary operations for all the instruction steps that aren't the decode and
+                    execute step. When the state machine is in the decode and execute step, the operations outputted by the operation decoder are triggered. Also, all the
+                    register enable operations are ANDed to the clock signal, as described in chapter 4, to ensure the state of the registers is only updated during
+                    clock pulses. 
+                </li>
+            </ul>
+        </p>
+
+        <p>
+            As already stated the instruction decoder is just a glorified demultiplexer so we'll skip its VHDL implementation. We'll now go through the
+            implementation of the operation decoder. The module has as output, all the possible operations that can be performed on the various components
+            of the CPU, this is, all of the inputs of these components. We therefore need to first figure out, which operations (or component inputs) we
+            want to trigger in each CPU instruction. Lets start with the first instruction: <code>add RX RY</code>. In order to perform this instruction
+            we need to set the ALU's first operand to RX and the second operand to RY, set the ALU's opcode to the <code>add</code> operation and finally,
+            enable the accumulator register (PACR). We can achieve this by triggering the following operations:
+            <ul>
+                <li>Set the ALU's operand A selector to 0b0.</li>
+                <li>Set the ALU's operand B selector to 0b0.</li>
+                <li>Set the ALU's opcode to 0b000.</li>
+                <li>Set the PACR enable to 1.</li>
+            </ul>
+
+            Or in terms of setting inputs to 1, we simply need to set PACR_En to 1. The idea is that we now do this for each instruction. This is of course quite time consuming,
+            but thankfully, I've already done this boring job in the past, and the complete list of the required operations for each instruction can be found 
+            <a href="https://github.com/dma-neves/dcpu/blob/main/other/instruction_outputs/instructionOutputs.txt">here</a>.
+        </p>
+
+        <p>
+            After knowing all the relationships between each instruction, and the low-level operations that need to be triggered to preform the instruction, we can
+            implement the operation decoder module by defining each operation/output as the OR between all the instructions that require that operation/output to be set to 1. 
+            Note that some instructions also take into account flags to trigger (or not) certain operations, like for example the instruction <code>jmpz</code>, which
+            is only performed if the zero flag is set.
+        </p>
+        
+        <p>
+            To make our lives easier, I developed a small 
+            <a href="https://github.com/dma-neves/dcpu/blob/main/other/instruction_outputs/instOutputsToVHDL.py">python script </a>
+            that takes as input the 
+            <a href="https://github.com/dma-neves/dcpu/blob/main/other/instruction_outputs/instructionOutputs.txt">list</a> we saw previously,
+            and outputs the body of the corresponding module. 
+            The final VHDL module code for this operation decoder is the following:
+        </p>
+
+        <pre>
+            <code>
+    entity OpDecoder is
+    Port(
+        
+        En : in STD_LOGIC;
+        ZF, NF, OVF : in STD_LOGIC;
+        IDR_l, IDR_h : STD_LOGIC_VECTOR(7 downto 0);
+    
+        add_RX_RY,
+        sub_RX_RY,
+        ssp_V,
+        inc_RX,
+        dec_RX,
+        neg_RX,
+        not_RX,
+        and_RX_RY,
+        or_RX_RY,
+        lod_V_ADR,
+        str_V_mADR,
+        lod_mADR_RX,
+        str_RX_mADR,
+        lod_RX_ADR,
+        lod_ACR_RX,
+        lod_ACR_ADR,
+        str_ACR_mADR,
+        str_IC_mADR,
+        jmp_ADR,
+        jmp_X,
+        jmpz_X,
+        jmpn_X,
+        jmpo_X,
+        hlt : in STD_LOGIC;
+    
+        opc : OUT STD_LOGIC_VECTOR(2 downto 0);
+        RM_S : OUT STD_LOGIC;
+        RXM_S : OUT STD_LOGIC_VECTOR(2 downto 0);
+        RYM_S : OUT STD_LOGIC_VECTOR(2 downto 0);
+        ICM_S : OUT STD_LOGIC_VECTOR(1 downto 0);
+        AM_S : OUT STD_LOGIC_VECTOR(1 downto 0);
+        AXM_S : OUT STD_LOGIC;
+        AYM_S : OUT STD_LOGIC;
+        DOM_S : OUT STD_LOGIC_VECTOR(1 downto 0);
+        AOM_S : OUT STD_LOGIC;
+        RED_S : OUT STD_LOGIC_VECTOR(2 downto 0);
+        IC_En,
+        IR_En,
+        IDR_En,
+        ADR_En,
+        ACR_En,
+        GPR_En : OUT STD_LOGIC;
+        rw : OUT STD_LOGIC
+    );
+    end OpDecoder;
+    
+    architecture Behavioral of OpDecoder is
+    // Components code here
+    signal RXM_S_8b : STD_LOGIC_VECTOR(7 downto 0);
+    begin
+    
+        ACR_En <= En and (add_RX_RY or sub_RX_RY or ssp_V or inc_RX or dec_RX or neg_RX or not_RX or and_RX_RY or or_RX_RY);
+        opc(0) <= En and (sub_RX_RY or ssp_V or dec_RX or not_RX or or_RX_RY);
+        AYM_S <= En and (ssp_V);
+        opc(1) <= En and (inc_RX or dec_RX or and_RX_RY or or_RX_RY);
+        opc(2) <= En and (neg_RX or not_RX or and_RX_RY or or_RX_RY);
+        AM_S(1) <= En and (lod_V_ADR);
+        ADR_En <= En and (lod_V_ADR or lod_RX_ADR or lod_ACR_ADR);
+        DOM_S(0) <= En and (str_V_mADR or str_IC_mADR);
+        DOM_S(1) <= En and (str_V_mADR or str_ACR_mADR);
+        AOM_S <= En and (str_V_mADR or lod_mADR_RX or str_RX_mADR or str_ACR_mADR or str_IC_mADR);
+        rw <= En and (str_V_mADR or str_RX_mADR or str_ACR_mADR or str_IC_mADR);
+        RM_S <= En and (lod_mADR_RX);
+        GPR_En <= En and (lod_mADR_RX or lod_ACR_RX);
+        AM_S(0) <= En and (lod_ACR_ADR);
+        ICM_S(1) <= En and (jmp_ADR);
+        IC_En <= En and (jmp_ADR or jmp_X or (jmpz_X and ZF) or (jmpn_X and NF) or (jmpo_X and OVF));
+        ICM_S(0) <= En and (jmp_X or (jmpz_X and ZF) or (jmpn_X and NF) or (jmpo_X and OVF));	
+        
+        RXM_S <= RXM_S_8b(2 downto 0);
+        RYM_S <= IDR_h(2 downto 0);
+        RED_S <= IDR_l(2 downto 0);
+    
+    
+        RX_MUX: Mux2_8b port map (
+            I0 => IDR_l,
+            I1 => "00000111",
+            sel => ssp_V,
+            o => RXM_S_8b
+        );
+    
+        AXM_S <= '0';
+        IDR_En <= '0';
+        IR_En <= '0';
+    end Behavioral;                
+            </code>
+        </pre>
+
+        <p>
+            As we discussed previously, the select and synchronize operations "module" is just a logical aggregation of operations that are performed
+            directly in the control unit module. Given that some of the instruction steps like Increment IC and Load Increment also need to trigger operations
+            like the instructions during the Decode and Execute step, a bunch of OR and AND gates are used to select the necessary operations depending on the
+            current state of the state-machine and the operations selected by the operation decoder. All the enable operations are also ANDed to the clock signal
+            as already stated.
+        </p>
+
+
+        <figure>
+            <img src="resources/clock_state_changes.svg" width="350">
+            <figcaption>Fig.15 Clock signal and state changes</figcaption>
+        </figure>
+
+        <p>
+            One important detail is that the register enable operations are actually ANDed to the inverted clock signal (clock signal followed by a NOT gate) instead of the raw clock signal. 
+            This results in the registers being updated on the down pulses (clock change from 1 to 0). Fig.15 shows why this is important. The state-machine state changes are triggered 
+            during the up clock pulses (clock change from 0 to 1), meaning that the instruction decoding and operation selection, for a given instruction step, starts right after such a pulse.
+            If we were to update the registers during the up clock pulses as well, we would get signal propagation delay related glitches. We would update the registers before the correct input
+            data would reach the registers. To ensure this doesn't happen, the registers are updated on the down clock pulses, right at the middle point of a clock cycle.    
+        </p>
+
+        <p>
+            The VHDL code for the control unit is quite long, so I won't include it in this document, but it can be found <a href="https://github.com/dma-neves/dcpu/blob/main/src/CU/ControlUnit.vhd">here</a>.
+        </p>
 
         <h2 id="firstprogram">7. Executing a Program</h2>
 
