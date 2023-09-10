@@ -768,7 +768,7 @@
         <p>
             Additionally, as programs get more complex, having a stack becomes
             pretty essential, and for this reason, we will also include some basic support for a stack. Register RH will be used as the stack pointer, and we'll include
-            an operation to subtract a value directly from it (usefull when addressing variables stored in the stack). 
+            an operation to subtract a value directly from it (useful when addressing variables stored in the stack). 
             
         </p>
             
@@ -968,22 +968,6 @@
             <figcaption>Tab.4 Instruction Set Architecture</figcaption>
         </figure>
 
-        <p>
-
-            In terms of the selectors and enablers of the various components of our CPU, all of them are controlled by the control unit, except for a few.
-
-            Note that many of our instructions operate over general purpose registers RX and RY. The indices X and Y are both passed in the instruction data.
-            Index X is stored in the first 4 bits (or 8 bits in case of a 16 bit architecture) of the instruction data and index Y in the last 4 bits (or 8 bits).
-            The 8 registers are aggregated into a single block like we can see in Fig.12. We use a demultiplexer when we want to update the state of a specific register, 
-            and two multiplexer to route the value of specific registers to the rest of the CPU. The first operation (update the state of a register) is always performed
-            on index X (load instructions are always performed over RX). This means that the selector of the multiplexer is simply directly wired to the first 4 bits of 
-            the IDR (Instruction Data Register).
-            For the second operation (routing the output of a register to the rest of the CPU) we need to consider routing both the RX and RY registers to deal
-            with instructions that operate over two operands, like <code>add RX RY</code>. This means that the selector of the multiplexer on the left is wired to the
-            first 4 bits of the IDR, and the multiplexer on the right is wired to the last 4 bits of the IDR.
-        </p>
-        
-
         <h2 id="cu">6. Control Unit</h2>
 
         <!--
@@ -1132,9 +1116,11 @@
         <p>
             After knowing all the relationships between each instruction, and the low-level operations that need to be triggered to preform the instruction, we can
             implement the operation decoder module by defining each operation/output as the OR between all the instructions that require that operation/output to be set to 1. 
+            
             Note that some instructions also take into account flags to trigger (or not) certain operations, like for example the instruction <code>jmpz</code>, which
             is only performed if the zero flag is set.
         </p>
+
         
         <p>
             To make our lives easier, I developed a small 
@@ -1142,6 +1128,29 @@
             that takes as input the 
             <a href="https://github.com/dma-neves/dcpu/blob/main/other/instruction_outputs/instructionOutputs.txt">list</a> we saw previously,
             and outputs the body of the corresponding module. 
+
+        </p>
+
+        <p>
+            Although this script handles most of the modules body, we still have to take into account some important details that will be programmed manually.
+
+            Namely, many of our instructions operate over general purpose registers RX and RY. The indices X and Y are both passed in the instruction data.
+            Index X is stored in the first 4 bits (or 8 bits in case of a 16 bit architecture) of the instruction data and index Y in the last 4 bits (or 8 bits).
+            The 8 registers are aggregated into a single block like we can see in Fig.12. We use a demultiplexer when we want to update the state of a specific register, 
+            and two multiplexer to route the value of specific registers to the rest of the CPU. The first operation (update the state of a register) is always performed
+            on index X (load instructions are always performed over RX). This means that the selector of the multiplexer is simply directly wired to the first 4 bits of 
+            the IDR (Instruction Data Register).
+            For the second operation (routing the output of a register to the rest of the CPU) we need to consider routing both the RX and RY registers to deal
+            with instructions that operate over two operands, like <code>add RX RY</code>. This means that the selector of the multiplexer on the left is wired to the
+            first 4 bits of the IDR, and the multiplexer on the right is wired to the last 4 bits of the IDR.
+        </p>
+
+        <p>
+            Finally, also note that the flag register enable can be wired to the same signal as the PACR register enable, given that
+            whenever we store the the ALU's result in the PACR register we also of course want to update the flag register. 
+        </p>
+
+        <p>
             The final VHDL module code for this operation decoder is the following:
         </p>
 
@@ -1266,6 +1275,37 @@
 
         <p>
             The VHDL code for the control unit is quite long, so I won't include it in this document, but it can be found <a href="https://github.com/dma-neves/dcpu/blob/main/src/CU/ControlUnit.vhd">here</a>.
+        </p>
+
+        <p>
+            Finally, with the control unit built, the full CPU module can easily be implemented by wiring all the components we have just built as seen in Fig.12.
+            Since the code for the module is quite extensive and not particularly intersting, I won't include it in this document, but it can be found
+            <a href="https://github.com/dma-neves/dcpu/blob/main/src/Main/CPU.vhd">here</a>,
+            and this is what the entity's port looks like:
+        </p>
+
+        <pre>
+            <code>
+    entity CPU is
+    Port(
+        reset : in STD_LOGIC;
+        clk : in STD_LOGIC;
+        dataIn : in STD_LOGIC_VECTOR(7 downto 0);
+    
+        address : out STD_LOGIC_VECTOR(7 downto 0);
+        dataOut : out STD_LOGIC_VECTOR(7 downto 0);
+        readWrite : out STD_LOGIC;
+        fetch : out STD_LOGIC; 
+    );
+    end CPU;
+            </code>
+        </pre>
+
+        <p>
+            Similarly, the main module also just involves wiring the CPU module with the memory modules.
+
+            To switch between the RAM and ROM modules, a the fetch signal (controlled by the control unit) is used to enable and disable the two memory modules. Whenever fetch is set to 1, to ROM
+            module is enabled and the RAM disabled, and vice-versa. The fetch signal is only set to zero during the Decode and Execute step.
         </p>
 
         <h2 id="firstprogram">7. Executing a Program</h2>
