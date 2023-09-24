@@ -39,18 +39,18 @@
         <h2 id="introduction">1. Introduction</h2>
 
         <figure>
-            <img src="resources/eniac.jpg" width="500">
+            <img src="resources/dcpu/eniac.jpg" width="500">
             <figcaption>Fig.1 ENIAC 1946 (First Programmable Digital Computer)</figcaption>
         </figure>
 
         <p>
             Since a long time, I've wondered how computers worked. My first attempts at understanding these 
-            complicated and seemingly magic-based machines arose during middle school while playing around with redstone in Minecraft and building simple circuits.
-            I wondered how one could go from these basic circuits to executing complex programs, but it's
+            complicated and seemingly magical machines arose during middle school while playing around with redstone in Minecraft.
+            I wondered how one could go from basic digital circuits to executing complex programs as we are used to. But it's
             fair to say that the jump from some simulated wiring in a video game to a functional computer was a bit ambitious. Fast forward 
             to my second year of University, and after learning about Digital Systems, Computer Architectures and Operating Systems, I 
             felt I finally had the necessary base knowledge to make the leap. With some basic knowledge of VHDL I decided to design and implement
-            a simple ALU, and then went from there.
+            a simple ALU, and then went on from there.
         </p>
             In this guide, I will try to guide you through the steps I went through (excluding all the original trial and error) to
             build a primitive CPU using logic gates as the foundational building blocks. Even though VHDL allows one to design and implement complex systems
@@ -85,7 +85,7 @@
         </p>
 
         <figure>
-            <img src="resources/vonneuman.jpg" width="500">
+            <img src="resources/dcpu/vonneuman.jpg" width="500">
             <figcaption>Fig.2 Von Neuman Architecture</figcaption>
         </figure>
 
@@ -104,7 +104,7 @@
         </p>
 
         <figure>
-            <img src="resources/logicgates.png" width="500">
+            <img src="resources/dcpu/logicgates.png" width="500">
             <figcaption>Fig.3 Logic Gates</figcaption>
         </figure>
 
@@ -140,7 +140,8 @@
             <a href="https://www.geeksforgeeks.org/bitwise-operators-in-c-cpp/">bit manipulation</a>,
             etc.
             In terms of tools, I personally used <a href="https://ghdl.github.io/ghdl/">ghdl</a>
-            to simulate VHDL on my computer
+            and <a href="https://gtkwave.sourceforge.net/">GTKWave</a>
+            to simulate VHDL and visualize the simulation on my computer,
             and used the <a href="https://www.intel.com/content/www/us/en/software-kit/666221/intel-quartus-ii-web-edition-design-software-version-13-1-for-windows.html">Intel Quartus II</a> 
             software to program my ALTERA FPGA CycloneII EP2C5T144.
         <p>
@@ -158,7 +159,7 @@
         -->
 
         <figure>
-            <img src="resources/alu.png" width="400">
+            <img src="resources/dcpu/alu.png" width="400">
             <figcaption>Fig.4 Arithmetic Logic Unit</figcaption>
         </figure>        
 
@@ -169,12 +170,12 @@
         </p>
 
         <figure>
-            <img src="resources/half-adder.svg" width="250">
+            <img src="resources/dcpu/half-adder.svg" width="250">
             <figcaption>Fig.5 Half-Adder</figcaption>
         </figure>                
 
         <figure>
-            <img src="resources/full-adder.svg" width="500">
+            <img src="resources/dcpu/full-adder.svg" width="500">
             <figcaption>Fig.6 Full-Adder</figcaption>
         </figure>               
 
@@ -323,7 +324,7 @@
 
 
         <figure>
-            <img src="resources/multiplexer.svg" width="300">
+            <img src="resources/dcpu/multiplexer.svg" width="300">
             <figcaption>Fig.7 Multiplexer</figcaption>
         </figure>  
 
@@ -452,7 +453,7 @@
         </p>
         
         <figure>
-            <img src="resources/alu.svg" width="600">
+            <img src="resources/dcpu/alu.svg" width="600">
             <figcaption>Fig.8 ALU Schematic</figcaption>
         </figure>  
 
@@ -530,7 +531,7 @@
         -->
 
         <figure style="display: inline-block; margin-right: 20px;">
-            <img src="resources/sr_flip_flop.svg" width="300">
+            <img src="resources/dcpu/sr_flip_flop.svg" width="300">
             <figcaption>Fig.9 SR Flip-Flop</figcaption>
         </figure>
         
@@ -576,13 +577,13 @@
             Fortunately, some smart physicists in the early 20th century found a way to store information using circuits, called multi-vibrators, that can easily be reproduced 
             using transistor-based logic gates. Fig.9 shows the schematic of a SR Flip-Flop. A SR Flip-Flop stores a state Q (Q' is equal to ~Q) and provides two inputs
             to set the state (Q = 1) and reset the state (Q = 0). Considering that the Flip-Flop is in the current state Qn, Tab.2 presents its truth table. Given that the
-            NOR gate's output is only 1 when both outputs are 0, we can see that if Q is 1 and Q' is 0, setting S to 1 results in Q chaning to 0 and therefore Q' to 1. While 
-            setting R to 0 results in Q' chaging to 1 and therefore Q to 0. If this doesn't seem clear, Ben Eater has a great comprehensive <a href="https://www.youtube.com/watch?v=KM0DdEaY5sY&t=241s">video</a> 
+            NOR gate's output is only 1 when both outputs are 0, we can see that if Q is 1 and Q' is 0, setting S to 1 results in Q changing to 0 and therefore Q' to 1. While 
+            setting R to 0 results in Q' changing to 1 and therefore Q to 0. If this doesn't seem clear, Ben Eater has a great comprehensive <a href="https://www.youtube.com/watch?v=KM0DdEaY5sY&t=241s">video</a> 
             on this circuit alone.
         </p>
 
         <figure>
-            <img src="resources/clock.jpg" width="400">
+            <img src="resources/dcpu/clock.jpg" width="400">
             <figcaption>Fig.10 Clock Signal</figcaption>
         </figure>
 
@@ -595,7 +596,7 @@
         </p>
 
         <figure style="display: inline-block; margin-right: 20px;">
-            <img src="resources/d_flip_flop.svg" width="400">
+            <img src="resources/dcpu/d_flip_flop.svg" width="400">
             <figcaption>Fig.11 D Flip-Flop</figcaption>
         </figure>
         
@@ -733,7 +734,7 @@
         -->
 
         <figure>
-            <img src="resources/cpu.png" width="600">
+            <img src="resources/dcpu/cpu.png" width="600">
             <figcaption>Fig.12 CPU schematic</figcaption>
         </figure>        
 
@@ -776,9 +777,9 @@
         <p>
             Finally, some instructions require some data to
             be specified alongside the instruction. For example to subtract a value from the stack pointer, we need to pass a value alongside the instruction.
-            We could reserve some of the instruction bits for data, but for convenience we will pass this data seperately.
+            We could reserve some of the instruction bits for data, but for convenience we will pass this data separately.
             This is not very efficient, since in the ROM module (that stores the program), instead of storing each instruction in a single address line, we will require 2
-            address lines, one for the instruction and one for the instruction data. We could improve this, but for the sake of simplicitly we will trade some memory efficiency for
+            address lines, one for the instruction and one for the instruction data. We could improve this, but for the sake of simplicity we will trade some memory efficiency for
             a simpler design. The ISA we will use for our CPU is the following (considering an 8-bit architecture):
         </p>
 
@@ -876,7 +877,7 @@
                     <tr>
                         <td>11</td>
                         <td>0b00001011</td>
-                        <td>ld [ADR] RX</td>
+                        <td>lod [ADR] RX</td>
                         <td>X</td>
                         <td>Loads the value at memory address [ADR] into register RX</td>
                     </tr>
@@ -978,7 +979,7 @@
             vhdl code
         -->
         <figure>
-            <img src="resources/CU.png" width="550">
+            <img src="resources/dcpu/CU.png" width="550">
             <figcaption>Fig.13 Control Unit</figcaption>
         </figure>
 
@@ -1000,7 +1001,7 @@
 
 
             <figure>
-                <img src="resources/seven_state_sm.png" width="550">
+                <img src="resources/dcpu/seven_state_sm.png" width="550">
                 <figcaption>Fig.14 Seven-State State Machine</figcaption>
             </figure>
 
@@ -1262,7 +1263,7 @@
 
 
         <figure>
-            <img src="resources/clock_state_changes.svg" width="350">
+            <img src="resources/dcpu/clock_state_changes.svg" width="350">
             <figcaption>Fig.15 Clock signal and state changes</figcaption>
         </figure>
 
@@ -1311,13 +1312,484 @@
 
         <h2 id="firstprogram">7. Executing a Program</h2>
 
-        <h2 id="assebler">8. Assembler</h2>
+        <p>
+            With the CPU built, its time to write and execute our first program. Given that our program will reside in the ROM, at this point , writing and loading a 
+            program into our CPU, is achieved by manually writing the instructions in binary in the correct address lines. To start simple, we'll write a program that
+            multiplies two numbers (given that our ALU doesn't directly support multiplication). In C we could easily implement a multiplication program using only
+            addition and looping as follows:
+        </p>
+
+        <pre>
+            <code>
+    int a = 3;
+    int b = 5;
+    int res = 0;
+
+    for(int i = 0; i < b; i++) {
+
+        res += a;
+    }
+            </code>
+        </pre>
+
+        <p>
+            In our CPU, we can assume that register RA, RB, RC and RD hold the variables a, b, res and i respectively. The loop can then be implemented using
+            a set of additions and some conditional jumps. Here is the assembly code that expresses the previous program:
+        </p>
+
+        <pre>
+            <code>
+    # a = 3
+    lod $3 RA
+
+    # b = 5
+    lod $5 RB
+
+    # res = 0
+    lod $0 RC
+
+    # i = 0
+    lod $0 RD
+
+    loop_start:
+
+        # res += a
+        add RC RA
+        lod ACR RC
+
+        # i++
+        inc RD
+        lod ACR RD
+
+        # if i < b goto loop_start
+        sub RD RB
+        jmpn loop_start
+
+    hlt
+            </code>
+        </pre>
+
+        <p>
+            Note that loading a specific value to a specific register (lod $V RX) is actually achieved using two instructions 
+            (assuming ADR is set to an unused address like 0x3e):
+        </p>
+
+        <pre>
+            <code>
+    str $V [ADR]
+    lod [ADR] RX
+            </code>
+        </pre>             
+            Finally we have to translate this assembly, into machine code:
+        </p>
+
+        <figure>
+            <table>
+                <thead>
+                    <tr>
+                        <th>address</th>
+                        <th>instruction</th>
+                        <th>opcode</th>
+                        <th>data</th>
+                        <th>description</th>
+                    </tr>
+                </thead>
+        
+                <tbody>
+
+                    <tr>
+                        <td>0b00000000</td>
+                        <td>lod $0x3e ADR</td>
+                        <td>0b00001001</td>
+                        <td>0b00111110</td>
+                        <td>setup ADR</td>
+                    </tr>
+        
+                    <tr>
+                        <td>0b00000001</td>
+                        <td>str $3 [ADR]</td>
+                        <td>0b00001010</td>
+                        <td>0b00000011</td>
+                        <td>a = 3</td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00000010</td>
+                        <td>lod [ADR] RA</td>
+                        <td>0b00001011</td>
+                        <td>0b00000000</td>
+                        <td></td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00000011</td>
+                        <td>str $5 [ADR]</td>
+                        <td>0b00001010</td>
+                        <td>0b00000101</td>
+                        <td>b = 5</td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00000100</td>
+                        <td>lod [ADR] RB</td>
+                        <td>0b00001011</td>
+                        <td>0b00000001</td>
+                        <td></td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00000101</td>
+                        <td>str $0 [ADR]</td>
+                        <td>0b00001010</td>
+                        <td>0b00000000</td>
+                        <td>res = 0</td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00000110</td>
+                        <td>lod [ADR] RC</td>
+                        <td>0b00001011</td>
+                        <td>0b00000010</td>
+                        <td></td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00000111</td>
+                        <td>str $0 [ADR]</td>
+                        <td>0b00001010</td>
+                        <td>0b00000000</td>
+                        <td>i = 0</td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00001000</td>
+                        <td>lod [ADR] RD</td>
+                        <td>0b00001011</td>
+                        <td>0b00000011</td>
+                        <td></td>
+                    </tr>
+
+                    <tr>
+                        <td><b>0b00001001</b></td>
+                        <td>add RC RA</td>
+                        <td>0b00000000</td>
+                        <td>0b00000010</td>
+                        <td>res += a</td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00001010</td>
+                        <td>lod ACR RC</td>
+                        <td>0b00001110</td>
+                        <td>0b00000010</td>
+                        <td></td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00001011</td>
+                        <td>inc RD</td>
+                        <td>0b00000011</td>
+                        <td>0b00000011</td>
+                        <td>i++</td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00001100</td>
+                        <td>lod ACR RD</td>
+                        <td>0b00001110</td>
+                        <td>0b00000011</td>
+                        <td></td>
+                    </tr>
+
+                    <tr>
+                        <td>0b00001101</td>
+                        <td>sub RD RB</td>
+                        <td>0b00000001</td>
+                        <td>0b00010011</td>
+                        <td>if i < b goto loop_start</td>
+                    </tr>
+                    <tr>
+                        <td>0b00001110</td>
+                        <td>jmpn loop_start</td>
+                        <td>0b00010101</td>
+                        <td><b>0b00001001</b></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>0b00001111</td>
+                        <td>hlt</td>
+                        <td>0b00010111</td>
+                        <td>0b00000000</td>
+                        <td>halt</td>
+                    </tr>
+
+                </table>
+            </tbody>
+            <figcaption>Tab.5 Machine Code Translation</figcaption>
+        </figure>
+
+        <p>
+            With the translated machine-code we can update our ROM module with the instructions and instruction-data in the corresponding
+            addresses:
+        </p>
+
+        <pre>
+            <code>    
+    entity ROM is
+    Port(
+        adr : in STD_LOGIC_VECTOR(7 downto 0);
+        En : in STD_LOGIC;
+        DO : out STD_LOGIC_VECTOR(7 downto 0)
+    );
+    end ROM;
+    
+    architecture Behavioral of ROM is
+    begin
+    process(adr, En)
+    begin
+        if En = '0' then
+            DO <= "00000000";
+        else
+            
+            case adr is
+                when "00000000" => DO <= "00001001";
+                when "00000001" => DO <= "00111110";
+                when "00000010" => DO <= "00001010";
+                when "00000011" => DO <= "00000011";
+                when "00000100" => DO <= "00001011";
+                when "00000101" => DO <= "00000000";
+                when "00000110" => DO <= "00001001";
+                when "00000111" => DO <= "00111110";
+                when "00001000" => DO <= "00001010";
+                when "00001001" => DO <= "00000101";
+                when "00001010" => DO <= "00001011";
+                when "00001011" => DO <= "00000001";
+                when "00001100" => DO <= "00001001";
+                when "00001101" => DO <= "00111110";
+                when "00001110" => DO <= "00001010";
+                when "00001111" => DO <= "00000000";
+
+                // ...
+
+                when others => DO <= "00000000";
+            end case;
+        end if;
+    end process;
+    end Behavioral;
+            </code>
+        </pre>
+
+        <p>
+            Finally, we can write a simple 
+            <a href="https://github.com/dma-neves/dcpu/blob/main/src/tests/main_test.vhd">VHDL test for our Main module</a>, 
+            simulate it using ghdl, and view the simulation using GTKWave. As you can see
+            in Fig.16 the final result stored in register RC (representing our variable res) is 15, the result of 3*5.
+        </p>
+
+        <figure>
+            <img src="resources/dcpu/mult_gtkwave.jpg" width="750">
+            <figcaption>Fig.16 Multiplication program visualization using GTKWave</figcaption>
+        </figure>
+
+        <h2 id="assembler">8. Assembler</h2>
+
+        <p>
+            As you may have noticed, translating assembly into machine code is quite time consuming and tedious. This is where an assembler
+            comes in handy. I've implemented a simpler 
+            <a href="https://github.com/dma-neves/dcpuAssembler/">assembler</a> 
+            for our ISA in python. I won't give a detailed guide on how to implement
+            such an assembler given that such a guide could become a whole new guide on its own. Another reason is that the assembler I've
+            implemented is of relatively low quality, as it doesn't really follow the usual structure of a compiler/assembler 
+            (lexer, parser, code generator, etc) and rather just performs a bunch of string manipulations. However it gets the job done.
+            I also included a ROM generator, which turns the outputed machine code from the assembler, into a VHDL ROM module, which we
+            can then load into our VHDL project.
+            
+        </p>
+        
+        <p>
+            To make our lives easier, we can also add a set of macros to the assembler to avoid rewriting repetitive code patterns. A macro,
+            is a "fake" instruction, which is expanded into a set o multiple instructions of our ISA during assembly. For example, in chapter 7
+            we saw it would be useful to have a <code>lod $V RX</code> instruction, which can be achieved by executing two existing instructions.
+            Our assembler includes the following macros:
+        </p>
+
+        <pre>
+            <code>
+    lod $V RX (load value to register):
+        lod $62 ADR
+        str $V [ADR]
+        lod [ADR] RX
+    
+    psh ($V or RX) (push value or register to the top of the stack):
+        lod SP ADR
+        str ($V or RX) [ADR]
+        inc SP
+        lod ACR SP 
+    
+    pop RX (pop top of stack to RX):
+        dec SP
+        lod ACR SP
+        lod SP ADR
+        lod [ADR] RX
+    
+    pop (pop top of stack):
+        dec SP
+        lod ACR SP
+    
+    lsr $V RX (Load Stack variable V to Register RX):
+        sub SP $V
+        lod ACR ADR
+        lod [ADR] RX
+    
+    srs RX $V (Store Register RX to Stack variable V):
+        sub SP $V
+        lod ACR ADR
+        str RX [ADR]
+            </code>
+        </pre>
+
+        <p>
+            With these macros and the assembler working, we can more easily test more complex programs. In the following program
+            we define an average function, which given an array and its length, calculates its average (note: ';' initiates a line comment):
+        </p>
+
+        <code>
+            <pre>
+    ; list average program
+    ; avg( [5,2,9] ) = 5
+    
+    jmp main
+    
+    avg:
+    
+        ; arr
+        pop RB
+        ; len
+        pop RC
+        ; sum = 0
+        lod $0 RD
+        ; i = 0
+        lod $0 RE
+    
+        sum_loop_start:
+    
+            ; if i >= len goto loop_end
+            sub RC RE
+            jmpn sum_loop_end
+            jmpz sum_loop_end
+    
+            ; sum += arr[i]
+            add RB RE
+            lod ACR ADR
+            lod [ADR] RF
+            add RD RF
+            lod ACR RD
+    
+            ; i++
+            inc RE
+            lod ACR RE
+            jmp sum_loop_start
+    
+    
+        sum_loop_end:
+    
+        ; div = 0
+        psh $0
+        ; s = sum
+        psh RD
+    
+        div_loop_start:
+    
+            ; s -= len
+            lsr $1 RF
+            sub RF RC
+            lod ACR RF
+            srs RF $1
+    
+            ; if s <= 0 goto div_loop_end
+            lsr $1 RF
+            dec RF
+            jmpn div_loop_end
+    
+            ; else div++ and goto div_loop_start
+            lsr $2 RF
+            inc RF
+            lod ACR RF
+            srs RF $2
+            jmp div_loop_start
+    
+        div_loop_end:
+    
+        ; return div
+        pop
+        pop RA
+        pop RB
+        lod RB ADR
+        jmp ADR
+    
+    main:
+    
+        ; len = 3
+        psh $3
+        ; arr[0] = 5
+        psh $5
+        ; arr[1] = 2
+        psh $2
+        ; arr[2] = 9
+        psh $9
+    
+    
+        ; psh return line
+        psh avg_ret
+        ; psh len
+        lsr $5 RA
+        psh RA
+        ; psh arr
+        SSP $5
+        psh ACR
+        ; call avg(arr,len)
+        jmp avg
+        avg_ret:
+    
+        hlt
+            </pre>
+        </code>
+
+        <p>
+            After assembling the program into machine code and generating the ROM module, we can simulate the CPU once again in ghdl, and view
+            the result of the simulation using GTKWave. As seen in Fig.17, the result stored in register RA is 5 which is indeed 
+            the average of the input array <code>arr = [5, 2, 9]</code>.
+        </p>
+
+        <figure>
+            <img src="resources/dcpu/avg_gtkwave.png" width="750">
+            <figcaption>Fig.17 Array average program visualization using GTKWave</figcaption>
+        </figure>
 
         <h2 id="fpga">9. FPGA</h2>
 
+        <p>
+            Once I was able to implement and execute "complex" programs on the DCPU, I decided to buy a cheap FPGA (the ALTERA CycloneII EP2C5T144)
+            and load it on real Hardware as seen in Fig.18. This required some additional coding and configuration, namely:
+            <ul>
+                <li>Adding more outputs to some of the modules to have them accessible to the GPIO pins of the board.</li>
+                <li>Adding modules to switch between various ouputed registers.</li>
+                <li>Adding modules to deal with <a href="https://en.wikipedia.org/wiki/Switch#Contact_bounce">contact debounce</a> on switches.</li>
+                <li>Configuring the board using Intel Quartus II Web Edition.</li>
+            </ul>
+        </p>
+
+        <p>
+            This step is of course not very crucial for this project, but is quite fun since you are able to view and interact with the CPU in real time.
+            It also allows us to later connect our CPU to other hardware and start thinking about IO. If you are interested in this particular board, I recommend
+            the following 
+            <a href="https://www.youtube.com/watch?v=le6Jo5DpLao">video</a> 
+            which gives a great introduction on the process of configuring it using Quartus II.
+        </p>
+
         <figure>
-            <img src="resources/fpga.jpg" width="450">
-            <figcaption>Fig.# FPGA board</figcaption>
+            <img src="resources/dcpu/fpga.jpg" width="400">
+            <figcaption>Fig.18 DCPU loaded on a ALTERA CycloneII EP2C5T144 FPGA</figcaption>
         </figure>
 
     </div>
