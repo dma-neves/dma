@@ -53,13 +53,13 @@
             a simple ALU, and then went on from there.
         </p>
             In this guide, I will try to guide you through the steps I went through (excluding all the original trial and error) to
-            build a primitive CPU using logic gates as the foundational building blocks. Even though VHDL allows one to design and implement complex systems
+            build a primitive CPU in VHDL using logic gates as the foundational building blocks. Even though VHDL allows one to design and implement complex systems
             using high-level behavioral descriptions (that are then compiled down to logic gates), I tried to purposely avoid these high-level features (like processes)
             in order to achieve a deeper and more complete understanding of the inner workings of a CPU.
         <p>
 
         <p>
-            It's important to note that the CPU we will be bulding is in no way revolutionary, impressive or particularly well designed. Hence the
+            It's important to note that the CPU we will be building is in no way revolutionary, impressive or particularly well designed. Hence the
             the name DCPU (Dumb CPU). Rather, the CPU is supposed to be as simple as possible, while still including most of the important functionalities
             a CPU needs to be usable.
         </p>
@@ -80,7 +80,7 @@
         -->
 
         <p>
-            Before diving into the implemention, we first need to establish some basic background information and concepts like the Von Nuemann Architecture,
+            Before diving into the implementation, we first need to establish some basic background information and concepts like the Von Nuemann Architecture,
             transistors, logic gates, Hardware Description Languages and FPGAs. If you are already familiar with these concepts, skip to the next chapter.
         </p>
 
@@ -90,7 +90,8 @@
         </figure>
 
         <p>
-            In 1945, John Von Neumann proposed an architecture for an electronic digital computer (Fig.2). This would endup becoming the basis for all computer architectures,
+            In 1945, John Von Neumann proposed an architecture for an electronic digital computer (Fig.2).
+            This would end up becoming the basis for pretty much all computer architectures,
             even to this day. The architecture proposes a system with the following essential components:
             <ul>
                 <li>A CPU (Central Processing Unit) with an ALU (Arithmetic Logic Unit) and registers. A register stores a value in a set of bits.</li>
@@ -99,7 +100,7 @@
                 <li>Input and output mechanisms.</li>
             </ul>
 
-            Our CPU will mostly follow this norm, with some small deviations. We will seperate the memory unit in a read-only unit that stores instructions and 
+            Our CPU will mostly follow this norm, with some small deviations. We will separate the memory unit in a read-only unit that stores instructions and 
             a read-write unit to store and manipulate data. This decision is a bit redundant, but makes our lives slightly easier. We will also mostly ignore IO.
         </p>
 
@@ -109,7 +110,7 @@
         </figure>
 
         <p>
-            Fundametally, computers are made of billions of <a href="https://en.wikipedia.org/wiki/Transistor">transistors</a>. These transistors are combined to form logic gates. With logic gates we can build any 
+            Fundamentally, computers are made of billions of <a href="https://en.wikipedia.org/wiki/Transistor">transistors</a>. These transistors are combined to form logic gates. With logic gates we can build any 
             digital system, including our CPU. A logic gate takes one or two bits as input and outputs a single bit. Fig.3 shows all the basic logic gates. AND outputs
             1 if both inputs are 1 otherwise 0, OR outputs 1 if any of the inputs is 1 and XOR outputs 1 if exactly one of the inputs is 1. The bottom three logic gates
             are the same as the first three but followed by a NOT logic gate. A NOT logic gates that takes a single input and outputs its negation. We can combine
@@ -125,11 +126,11 @@
         </p> -->
 
         <p>
-             In order to develop our own CPU, we need to somehow create or represent a circtuit composed of these logic gates. One way would be to buy some chips with
+             In order to develop our own CPU, we need to somehow create or represent a circuit composed of these logic gates. One way would be to buy some chips with
              logic gates and assemble them on a breadboard. Another option would be to design an manufacture an actual microchip. Given that both these
              options don't scale very well, can cost some money and aren't very debug friendly, a more convenient and cheaper alternative is to design our circuits
-             using a harware description language like VHDL. These languages allow one to describe a digital system using code. With the VHDL code we can then simulate
-             the circuit on our computer, or "upload" it to an FPGA (Field Programmable Gate Array). An FPGA is a integrated circuit that can be configured to behave
+             using a hardware description language like VHDL. These languages allow one to describe a digital system using code. With the VHDL code we can then simulate
+             the circuit on our computer, or "upload" it to an FPGA (Field Programmable Gate Array). An FPGA is an integrated circuit that can be configured to behave
              as "any" circuit we want. 
         </p>
             Note that this guide will not include an in depth tutorial on VHDL, so even though the VHDL we'll be writing 
@@ -164,9 +165,9 @@
         </figure>        
 
         <p>
-            Our first step is to build an ALU (Arithmetic Logic Unit). This unit is responisble for carrying out all the math operations a CPU might need to perfrom. 
+            Our first step is to build an ALU (Arithmetic Logic Unit). This unit is responsible for carrying out all the math operations a CPU might need to perform. 
             A simple ALU (Fig.4), takes as inputs two binary numbers (operands) and an operation code (opcode), and outputs a binary number (result) and some flags (status) that correspond to the
-            result of performing the specified operation on the input numbers.
+            result of performing the specified operation on the operands.
         </p>
 
         <figure>
@@ -284,19 +285,19 @@
         </pre>
         
         <p>
-            The next challange is dealing with subtractions and negative numbers. The most popular approach to this problem
-            is using the <a href="https://en.wikipedia.org/wiki/Two%27s_complement">two's compliment</a> method. In order to be able to represent both
-            posisitive and negative values, we assume that the the binary digit with the greatest place value represents the number's sign. 0 corresponds
+            The next challenge is dealing with subtractions and negative numbers. The most popular approach to this problem
+            is using the <a href="https://en.wikipedia.org/wiki/Two%27s_complement">two's compliment</a> method. We assume that the the binary digit with the 
+            greatest place value (the left most) in a binary number represents the number's sign. 0 corresponds
             to a positive number and 1 corresponds to a negative number. Positive numbers are represented in the same way as before, while negative numbers 
-            are encoded diffirently. To represent a negative numbre in two's compliment, we use the following method:
+            are encoded differently. To represent a negative number in two's compliment, we use the following method:
             <ul>
                 <li>Starting with the equivalent positive number.</li>
                 <li>Invert (or flip) all bits.</li>
-                <li>Add 1 to the entire inverted number, ignoring any overflow<,/li>
+                <li>Add 1 to the entire inverted number, ignoring any overflow</li>
             </ul>
-            This encoding might seem a bit odd, but it actually allows for some nice properties. Namely, adding two numbers in this representation works perfectly
+            This encoding might seem a bit odd, but it actually takes advantage of some nice properties. Namely, adding two numbers in this representation works perfectly
             with both negative and positive numbers. For example adding 4 (0b00000100) to -3 (0b11111101), this is 4-3, gives us 0b11111111, which encodes the value -1.
-            By adding a module to our ALU that negates a value, we can then implement subtractions by performing negations followed by additions. This is A-B is the same
+            By adding a module to our ALU that negates a value, we can then implement subtractions by performing negations followed by additions. This is, A-B
             can be implemented as A+(-B). A negation module can be implement as follows using the previous adder and an 8 bit NOT operator:
         </p>
 
@@ -329,12 +330,13 @@
         </figure>  
 
         <p>
-            The final piece we need to build the ALU is a multiplexer. A multiplexer is a component that receives a set of inputs I0, I1, ..., IN
-            (each input can be a single bit or binary values) and a selector S, and outputs the value In, where n is the index selected by S. This is,
+            The final piece we need to build the ALU is a multiplexer, which given a set of input values, allows us to select a specific one. 
+            Assuming a multiplexer receives a set of inputs I0, I1, ..., IN
+            (each input can be a single bit or a binary value) and a selector S, it outputs the value In, where n is the index selected by S. This is,
             if S is 0b0 the output is I0, if S is 0b1 the output is I1, if S is 0b10 the output is I2 and so on. Such a component can be easily implemented
             using AND gates connecting each input I with the necessary S value (NOT gates used for the bits that should be zero) and a final OR gate
-            combining all the intermediate outputs. Fig.7 shows a multiplexer circuit with 4 input values and a two bit selector S. Note that in such a diagram a
-            circle preciding a gate's input represents that the input is flipped (NOT gate). This multiplexer can be implemented as follows:
+            combining all the intermediate outputs. Fig.7 shows a multiplexer circuit with 4 input values and a two bit selector S. Note that in such a diagram, a
+            circle preceding a gate's input represents that the input is flipped (NOT gate). This multiplexer can be implemented as follows:
         </p>
 
         <pre>
@@ -373,7 +375,7 @@
 
         <p>
             With an adder, logic operators, a negator and some multiplexers, we can finally build our ALU. Lets consider that the ALU will support 8 different
-            operations. Our opcode will therefore be specified by a 3 bit value (since 2^3 = 8). Tab.1 shows the 8 operations.
+            operations. Our opcode will therefore be specified by a 3 bit value (since 2^3 = 8). Tab.1 shows the 8 operations we will support.
         </p>
 
         <figure>
@@ -448,8 +450,8 @@
         <p>
             <b>Notes:</b> In this circuit there are actually two adders given that there is
             also an adder embedded in the Negate module. We could refine the design and share a single Adder for both purposes, but this solution
-            is slightly more convenient and allows us to implement the subtraction operation easily. The negation performed on the selector of Mux5
-            is somewhat unecessary. It is present in this schematic just to achieve a more convenient layout of the inputs.
+            is slightly more convenient and allows us to implement the subtraction operation easily. Note also that the negation performed on the selector of Mux5
+            is somewhat unnecessary. It is present in this schematic just to achieve a more convenient layout of the inputs.
         </p>
         
         <figure>
@@ -573,7 +575,7 @@
         
 
         <p>
-            With the ALU built, we can now perform "all" the operations we need. However, we need some way to store the results of these operations and data in general. 
+            With the ALU built, we can now perform "all" the mathematical operations we need. However, we need some way to store the results of these operations and data in general. 
             Fortunately, some smart physicists in the early 20th century found a way to store information using circuits, called multi-vibrators, that can easily be reproduced 
             using transistor-based logic gates. Fig.9 shows the schematic of a SR Flip-Flop. A SR Flip-Flop stores a state Q (Q' is equal to ~Q) and provides two inputs
             to set the state (Q = 1) and reset the state (Q = 0). Considering that the Flip-Flop is in the current state Qn, Tab.2 presents its truth table. Given that the
@@ -588,11 +590,12 @@
         </figure>
 
         <p>
-            Given that usually computer programs must perform a sequence of instructions, and not just a single operation, CPUs need a mechanism to sequence these
-            instructions. This is where the clock comes in. Inside every computer is a clock generator, usually a crystal oscillator, that generates a pulse (or voltage)
+            Given that computer programs must perform a sequence of instructions, and not just a single operation, CPUs need some sort of sequencing mechanism.
+            This is where the clock comes in. Inside every computer is a clock generator, usually a crystal oscillator, that generates a pulse (or voltage)
             at even intervals as seen in Fig.10. The CPU can then use this clock to perform an instruction step on each clock cycle (More information on this in chapter 6). This means that
             state changes inside a CPU must also occur synchronously with the clock. Ideally, the state of a Flip-Flop inside a CPU, should only be updated during a clock pulse
-            (a change of signal from 0 to 1, or from 1 to 0) to eliminate any glitches related to signal propagation delays.
+            (a change of signal from 0 to 1, or from 1 to 0) to eliminate any glitches related to signal propagation delays and to ensure state changes happen in sync with
+            the rest of the CPU.
         </p>
 
         <figure style="display: inline-block; margin-right: 20px;">
@@ -714,7 +717,7 @@
             A memory module can be implemented as a large array of registers. In a memory module, each register must be accessible by an address.
             The first register can be set to address 0b00000000, the second register to address 0b00000001 and so on. This addressing system can be
             achieved by connecting the registers to a large demultiplexer. A demultiplexer implements the inverse operation of a multiplexer. With a
-            slector (the address), the demultiplexer routs an input value to one of the N outputs (N registers for example). Note that there are more efficient 
+            selector (the address), the demultiplexer routs an input value to one of the N outputs (N registers for example). Note that there are more efficient ways 
             (using less logic gates) of implementing a memory module. Since the focus of this project is the implementation of a CPU, and not necessarily memory
             modules, I implemented the 
             <a href="https://github.com/dma-neves/dcpu/blob/main/src/Memory/RAM64.vhd">RAM</a> and 
@@ -741,8 +744,8 @@
         <p>
             Now that we are able to perform operations and store and manipulate state, its time to define our CPU's architecture as well as its
             ISA (Instruction Set Architecture). A CPU's ISA, is simply the set of instructions it supports. As we discussed in chapter 1, following
-            the Von Neumann architecture, our CPU should include a CPU, a memory module, a set of registers and a control unit. Fig.12 shows the
-            schematic of the CPU we aim to build. It contains a control unit, two memory modules (a ROM to store a program and a RAM to store data),
+            the Von Neumann architecture, our system should include an ALU, a memory module, a set of registers and a control unit. Fig.12 shows the
+            schematic of the system we aim to build. It contains a control unit, two memory modules (a ROM to store a program and a RAM to store data),
             the ALU we implemented previously, a set of registers, and a set of multiplexers and <a href="https://www.electronics-tutorials.ws/combination/comb_3.html">demultiplexers</a> (inverse multiplexer).
             
             In terms of registers, the CPU will have 8 general purpose registers (RA, RB, ..., RH), used to store temporary values during a program's execution, and 7
@@ -770,7 +773,9 @@
         <p>
             Additionally, as programs get more complex, having a stack becomes
             pretty essential, and for this reason, we will also include some basic support for a stack. Register RH will be used as the stack pointer, and we'll include
-            an operation to subtract a value directly from it (useful when addressing variables stored in the stack). 
+            an operation to subtract a value directly from it (useful when addressing variables stored in the stack). A stack also allows us to support functions as we
+            can push both parameters and return addresses to the stack. The ADR register allows us to move said return addresses to it, and then perform the corresponding 
+            jump to the return address.
             
         </p>
             
@@ -984,16 +989,16 @@
         </figure>
 
         <p>
-            The last piece of the puzzle is the Control Unit which orchestrates all the other components of the CPU. It takes
+            The last piece of the puzzle is the Control Unit which orchestrates all the other components of the CPU taking into account the previous ISA. It takes
             a clock signal as input and performs an instruction step on each clock cycle. An instruction can usually be split into three
             logical steps: fetch (get the instruction from memory), decode (decode the instruction) and execute (trigger the inputs of the
             other components of the CPU). In our CPU, each instruction will be composed of 7 steps:
 
             <ol>
-                <li><b>Fetch instruction:</b> Fetch the instruction stored in the memory address [IC] in the ROM module.</li>
+                <li><b>Fetch instruction:</b> Fetch the instruction stored in the memory address [IC] in the ROM module to the IR register.</li>
                 <li><b>Increment IC:</b> Increment the value stored in the register IC using the ALU.</li>
                 <li><b>Load increment:</b> Load the value of the previous increment, that is stored int the IACR register, to the IC register.</li>
-                <li><b>Fetch instruction data:</b> Fetch the instruction data stored in the memory address [IC] in the ROM module.</li>
+                <li><b>Fetch instruction data:</b> Fetch the instruction data stored in the memory address [IC] in the ROM module to the IDR register.</li>
                 <li><b>Decode and execute:</b> Decode the instruction and execute it by triggering the inputs of the required components.</li>
                 <li><b>Increment IC:</b> Same as 2.</li>
                 <li><b>Load increment:</b> Same as 3.</li>
@@ -1097,17 +1102,17 @@
         </p>
 
         <p>
-            As already stated the instruction decoder is just a glorified demultiplexer so we'll skip its VHDL implementation. We'll now go through the
+            As already stated, the instruction decoder is just a glorified demultiplexer so we'll skip its VHDL implementation. We'll now go through the
             implementation of the operation decoder. The module has as output, all the possible operations that can be performed on the various components
             of the CPU, this is, all of the inputs of these components. We therefore need to first figure out, which operations (or component inputs) we
             want to trigger in each CPU instruction. Lets start with the first instruction: <code>add RX RY</code>. In order to perform this instruction
             we need to set the ALU's first operand to RX and the second operand to RY, set the ALU's opcode to the <code>add</code> operation and finally,
             enable the accumulator register (PACR). We can achieve this by triggering the following operations:
             <ul>
-                <li>Set the ALU's operand A selector to 0b0.</li>
-                <li>Set the ALU's operand B selector to 0b0.</li>
-                <li>Set the ALU's opcode to 0b000.</li>
-                <li>Set the PACR enable to 1.</li>
+                <li>Set the ALU's operand A selector to 0b0 (so that the routed input is RX).</li>
+                <li>Set the ALU's operand B selector to 0b0 (so that the routed input is RY).</li>
+                <li>Set the ALU's opcode to 0b000 (add opcode).</li>
+                <li>Set the PACR enable to 1 (save the result of the addition).</li>
             </ul>
 
             Or in terms of setting inputs to 1, we simply need to set PACR_En to 1. The idea is that we now do this for each instruction. This is of course quite time consuming,
@@ -1140,7 +1145,7 @@
             Index X is stored in the first 4 bits (or 8 bits in case of a 16 bit architecture) of the instruction data and index Y in the last 4 bits (or 8 bits).
             The 8 registers are aggregated into a single block like we can see in Fig.12. We use a demultiplexer when we want to update the state of a specific register, 
             and two multiplexer to route the value of specific registers to the rest of the CPU. The first operation (update the state of a register) is always performed
-            on index X (load instructions are always performed over RX). This means that the selector of the multiplexer is simply directly wired to the first 4 bits of 
+            on index X (since load instructions are always performed over RX). This means that the selector of the multiplexer is simply directly wired to the first 4 bits of 
             the IDR (Instruction Data Register).
             For the second operation (routing the output of a register to the rest of the CPU) we need to consider routing both the RX and RY registers to deal
             with instructions that operate over two operands, like <code>add RX RY</code>. This means that the selector of the multiplexer on the left is wired to the
@@ -1255,7 +1260,7 @@
 
         <p>
             As we discussed previously, the select and synchronize operations "module" is just a logical aggregation of operations that are performed
-            directly in the control unit module. Given that some of the instruction steps like Increment IC and Load Increment also need to trigger operations
+            directly in the control unit module. Given that some of the instruction steps, like Increment IC and Load Increment, also need to trigger operations
             like the instructions during the Decode and Execute step, a bunch of OR and AND gates are used to select the necessary operations depending on the
             current state of the state-machine and the operations selected by the operation decoder. All the enable operations are also ANDed to the clock signal
             as already stated.
@@ -1270,7 +1275,7 @@
         <p>
             One important detail is that the register enable operations are actually ANDed to the inverted clock signal (clock signal followed by a NOT gate) instead of the raw clock signal. 
             This results in the registers being updated on the down pulses (clock change from 1 to 0). Fig.15 shows why this is important. The state-machine state changes are triggered 
-            during the up clock pulses (clock change from 0 to 1), meaning that the instruction decoding and operation selection, for a given instruction step, starts right after such a pulse.
+            during the up clock pulses (clock change from 0 to 1), meaning that the instruction decoding and/or operation selection, for a given instruction, starts right after such a pulse.
             If we were to update the registers during the up clock pulses as well, we would get signal propagation delay related glitches. We would update the registers before the correct input
             data would reach the registers. To ensure this doesn't happen, the registers are updated on the down clock pulses, right at the middle point of a clock cycle.    
         </p>
@@ -1281,7 +1286,7 @@
 
         <p>
             Finally, with the control unit built, the full CPU module can easily be implemented by wiring all the components we have just built as seen in Fig.12.
-            Since the code for the module is quite extensive and not particularly intersting, I won't include it in this document, but it can be found
+            Since the code for the module is quite extensive and not particularly interesting, I also won't include it in this document, but it can be found
             <a href="https://github.com/dma-neves/dcpu/blob/main/src/Main/CPU.vhd">here</a>,
             and this is what the entity's port looks like:
         </p>
@@ -1313,7 +1318,7 @@
         <h2 id="firstprogram">7. Executing a Program</h2>
 
         <p>
-            With the CPU built, its time to write and execute our first program. Given that our program will reside in the ROM, at this point , writing and loading a 
+            With the CPU built, its time to write and execute our first program. Given that our program will reside in the ROM, at this point, writing and loading a 
             program into our CPU, is achieved by manually writing the instructions in binary in the correct address lines. To start simple, we'll write a program that
             multiplies two numbers (given that our ALU doesn't directly support multiplication). In C we could easily implement a multiplication program using only
             addition and looping as follows:
@@ -1529,7 +1534,7 @@
         </figure>
 
         <p>
-            With the translated machine-code we can update our ROM module with the instructions and instruction-data in the corresponding
+            We now use this machine-code to update our ROM module with the instructions and instruction-data in the corresponding
             addresses:
         </p>
 
@@ -1581,9 +1586,9 @@
 
         <p>
             Finally, we can write a simple 
-            <a href="https://github.com/dma-neves/dcpu/blob/main/src/tests/main_test.vhd">VHDL test for our Main module</a>, 
+            <a href="https://github.com/dma-neves/dcpu/blob/main/src/tests/main_test.vhd">VHDL test</a> for our Main module, 
             simulate it using ghdl, and view the simulation using GTKWave. As you can see
-            in Fig.16 the final result stored in register RC (representing our variable res) is 15, the result of 3*5.
+            in Fig.16 the final result stored in register RC (representing our variable res) is 15, the result of 3*5!
         </p>
 
         <figure>
@@ -1598,11 +1603,11 @@
             comes in handy. I've implemented a simpler 
             <a href="https://github.com/dma-neves/dcpuAssembler/">assembler</a> 
             for our ISA in python. I won't give a detailed guide on how to implement
-            such an assembler given that such a guide could become a whole new guide on its own. Another reason is that the assembler I've
-            implemented is of relatively low quality, as it doesn't really follow the usual structure of a compiler/assembler 
-            (lexer, parser, code generator, etc) and rather just performs a bunch of string manipulations. However it gets the job done.
-            I also included a ROM generator, which turns the outputed machine code from the assembler, into a VHDL ROM module, which we
-            can then load into our VHDL project.
+            such an assembler given that this could become a whole new guide of its own. Another reason, is that the assembler I've
+            implemented is of relatively low quality as it doesn't really follow the usual structure of a compiler/assembler 
+            (lexer, parser, code generator, etc). Rather just performs a bunch of string manipulations directly. However, it gets the job done.
+            I also included a ROM generator, which turns the outputed machine code from the assembler, into a VHDL ROM module which we
+            can load into our VHDL project.
             
         </p>
         
@@ -1773,7 +1778,7 @@
             and load it on real Hardware as seen in Fig.18. This required some additional coding and configuration, namely:
             <ul>
                 <li>Adding more outputs to some of the modules to have them accessible to the GPIO pins of the board.</li>
-                <li>Adding modules to switch between various ouputed registers.</li>
+                <li>Adding modules to switch between various outputed registers.</li>
                 <li>Adding modules to deal with <a href="https://en.wikipedia.org/wiki/Switch#Contact_bounce">contact debounce</a> on switches.</li>
                 <li>Configuring the board using Intel Quartus II Web Edition.</li>
             </ul>
@@ -1782,7 +1787,7 @@
         <p>
             This step is of course not very crucial for this project, but is quite fun since you are able to view and interact with the CPU in real time.
             It also allows us to later connect our CPU to other hardware and start thinking about IO. If you are interested in this particular board, I recommend
-            the following 
+            the following this
             <a href="https://www.youtube.com/watch?v=le6Jo5DpLao">video</a> 
             which gives a great introduction on the process of configuring it using Quartus II.
         </p>
