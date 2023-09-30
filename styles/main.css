@@ -3,7 +3,7 @@ body {
     padding: 0;
     /*font-family: Arial, sans-serif;*/
     font-family: "Exo", sans-serif;
-    font-size: 16px;
+    font-size: 17px;
     color:#666;
     line-height: 1.5;
 }
@@ -40,7 +40,7 @@ nav a:hover {
     /*background-color: #f2f2f2;*/
     padding: 20px;
     /* margin-bottom: 20px; */
-    max-width: 900px;
+    max-width: 1000px;
 
 
     margin: 0 auto;
@@ -118,6 +118,9 @@ th,td {
     border: 1px solid #ddd;
 }
 
+td {
+}
+
 th {
     background-color: #f2f2f2;
 }
@@ -145,4 +148,17 @@ tr:nth-child(even) {
 .min-list a {
     color: #999;
     font-weight: normal;
+}
+
+
+
+/*  raw table */
+
+.raw-table {
+
+}
+
+.raw-table tbody {
+
+    font-family: 'Consolas', monospace;
 }
