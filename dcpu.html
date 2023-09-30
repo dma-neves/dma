@@ -9,6 +9,9 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
 
+	<link href="styles/prism.css" rel="stylesheet" />
+
+    <script src="scripts/prism.js"></script>
     <script src="scripts/main.js"></script>
 
 </head>
@@ -38,10 +41,12 @@
 
         <h2 id="introduction">1. Introduction</h2>
 
+        <center>
         <figure>
             <img src="resources/dcpu/eniac.jpg" width="500">
             <figcaption>Fig.1 ENIAC 1946 (First Programmable Digital Computer)</figcaption>
         </figure>
+        </center>
 
         <p>
             Since a long time, I've wondered how computers worked. My first attempts at understanding these 
@@ -84,10 +89,12 @@
             transistors, logic gates, Hardware Description Languages and FPGAs. If you are already familiar with these concepts, skip to the next chapter.
         </p>
 
+        <center>
         <figure>
             <img src="resources/dcpu/vonneuman.jpg" width="500">
             <figcaption>Fig.2 Von Neuman Architecture</figcaption>
         </figure>
+        </center>
 
         <p>
             In 1945, John Von Neumann proposed an architecture for an electronic digital computer (Fig.2).
@@ -104,10 +111,12 @@
             a read-write unit to store and manipulate data. This decision is a bit redundant, but makes our lives slightly easier. We will also mostly ignore IO.
         </p>
 
+        <center>
         <figure>
             <img src="resources/dcpu/logicgates.png" width="500">
             <figcaption>Fig.3 Logic Gates</figcaption>
         </figure>
+        </center>
 
         <p>
             Fundamentally, computers are made of billions of <a href="https://en.wikipedia.org/wiki/Transistor">transistors</a>. These transistors are combined to form logic gates. With logic gates we can build any 
@@ -159,10 +168,12 @@
             ALU
         -->
 
+        <center>
         <figure>
             <img src="resources/dcpu/alu.png" width="400">
             <figcaption>Fig.4 Arithmetic Logic Unit</figcaption>
-        </figure>        
+        </figure>
+        </center>        
 
         <p>
             Our first step is to build an ALU (Arithmetic Logic Unit). This unit is responsible for carrying out all the math operations a CPU might need to perform. 
@@ -170,15 +181,19 @@
             result of performing the specified operation on the operands.
         </p>
 
+        <center>
         <figure>
             <img src="resources/dcpu/half-adder.svg" width="250">
             <figcaption>Fig.5 Half-Adder</figcaption>
-        </figure>                
+        </figure>
+        </center>                
 
+        <center>
         <figure>
             <img src="resources/dcpu/full-adder.svg" width="500">
             <figcaption>Fig.6 Full-Adder</figcaption>
-        </figure>               
+        </figure>
+        </center>               
 
         <p>
             The first operation we'll implement is addition. If we want to add two bits A and B, we can use the circuit seen in Fig.5, a half-adder. The AND gate
@@ -188,7 +203,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity FullAdder is
 
     Port(
@@ -223,7 +238,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity Adder is
     Port(
         a : IN STD_LOGIC_VECTOR(7 downto 0);
@@ -259,7 +274,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity And_8 is
     Port(
         a : in STD_LOGIC_VECTOR(7 downto 0);
@@ -302,7 +317,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity Negate is
     Port(
         a : in STD_LOGIC_VECTOR(8 downto 0);
@@ -324,10 +339,12 @@
         </pre>
 
 
+        <center>
         <figure>
             <img src="resources/dcpu/multiplexer.svg" width="300">
             <figcaption>Fig.7 Multiplexer</figcaption>
-        </figure>  
+        </figure>
+        </center>  
 
         <p>
             The final piece we need to build the ALU is a multiplexer, which given a set of input values, allows us to select a specific one. 
@@ -340,7 +357,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity Mux4 is
     Port(
         I0, I1, I2, I3 : in STD_LOGIC_VECTOR(8 downto 0);
@@ -378,6 +395,7 @@
             operations. Our opcode will therefore be specified by a 3 bit value (since 2^3 = 8). Tab.1 shows the 8 operations we will support.
         </p>
 
+        <center>
         <figure>
             <table border="1">
 
@@ -434,6 +452,7 @@
             </table>
             <figcaption>Tab.1 ALU opcodes</figcaption>
         </figure>
+        </center>
         
         <p>
             Fig.8 shows a diagram of the ALU that implements these 8 operations. It receives two 8 bit input operands A and B as well as an input opcode. For
@@ -454,17 +473,19 @@
             is somewhat unnecessary. It is present in this schematic just to achieve a more convenient layout of the inputs.
         </p>
         
+        <center>
         <figure>
             <img src="resources/dcpu/alu.svg" width="600">
             <figcaption>Fig.8 ALU Schematic</figcaption>
-        </figure>  
+        </figure>
+        </center>  
 
         <p>
             This ALU can be implemented in VHDL as follows:
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity ALU is
 
     Port (
@@ -536,6 +557,7 @@
             <img src="resources/dcpu/sr_flip_flop.svg" width="300">
             <figcaption>Fig.9 SR Flip-Flop</figcaption>
         </figure>
+        </center>
         
         <figure style="display: inline-block;">
             <table border="1">
@@ -572,6 +594,7 @@
             </table>
             <figcaption>Tab.2 SR Flip-Flop Truth Table</figcaption>
         </figure>
+        </center>
         
 
         <p>
@@ -584,10 +607,12 @@
             on this circuit alone.
         </p>
 
+        <center>
         <figure>
             <img src="resources/dcpu/clock.jpg" width="400">
             <figcaption>Fig.10 Clock Signal</figcaption>
         </figure>
+        </center>
 
         <p>
             Given that computer programs must perform a sequence of instructions, and not just a single operation, CPUs need some sort of sequencing mechanism.
@@ -602,6 +627,7 @@
             <img src="resources/dcpu/d_flip_flop.svg" width="400">
             <figcaption>Fig.11 D Flip-Flop</figcaption>
         </figure>
+        </center>
         
         <figure style="display: inline-block;">
             <table border="1">
@@ -632,7 +658,8 @@
                 </tbody>    
             </table>
             <figcaption>Tab.3 D Flip-Flop Truth Table</figcaption>
-        </figure>        
+        </figure>
+        </center>        
 
         <p>
             Fig.11 shows the schematic for a D Flip-Flop. This Flip-Flop is similar to the
@@ -657,7 +684,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity DFlipFlop is
 
     Port(
@@ -689,7 +716,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity Register_8b is
     Port(
         En, R : in STD_LOGIC;
@@ -736,10 +763,12 @@
             ISA
         -->
 
+        <center>
         <figure>
             <img src="resources/dcpu/cpu.png" width="600">
             <figcaption>Fig.12 CPU schematic</figcaption>
-        </figure>        
+        </figure>
+        </center>        
 
         <p>
             Now that we are able to perform operations and store and manipulate state, its time to define our CPU's architecture as well as its
@@ -788,6 +817,7 @@
             a simpler design. The ISA we will use for our CPU is the following (considering an 8-bit architecture):
         </p>
 
+        <center>
         <figure>
             <table>
                 <thead>
@@ -974,6 +1004,7 @@
             </tbody>
             <figcaption>Tab.4 Instruction Set Architecture</figcaption>
         </figure>
+        </center>
 
         <h2 id="cu">6. Control Unit</h2>
 
@@ -983,10 +1014,12 @@
             ...
             vhdl code
         -->
+        <center>
         <figure>
             <img src="resources/dcpu/CU.png" width="550">
             <figcaption>Fig.13 Control Unit</figcaption>
         </figure>
+        </center>
 
         <p>
             The last piece of the puzzle is the Control Unit which orchestrates all the other components of the CPU taking into account the previous ISA. It takes
@@ -1005,10 +1038,12 @@
             </ol>
 
 
-            <figure>
+            <center>
+        <figure>
                 <img src="resources/dcpu/seven_state_sm.png" width="550">
                 <figcaption>Fig.14 Seven-State State Machine</figcaption>
             </figure>
+        </center>
 
             To perform these steps, the control unit needs a seven-state state machine that loops indefinitely (until the hlt instruction is executed). 
             A state machine can easily implemented using D Flip-Flops. In this case using 7 D Flip-Flops, and 1 D Flip-Flop that resets to 1 instead of 0.
@@ -1020,7 +1055,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity SevenState_sm is
     Port(
         clk : in STD_LOGIC;
@@ -1105,8 +1140,8 @@
             As already stated, the instruction decoder is just a glorified demultiplexer so we'll skip its VHDL implementation. We'll now go through the
             implementation of the operation decoder. The module has as output, all the possible operations that can be performed on the various components
             of the CPU, this is, all of the inputs of these components. We therefore need to first figure out, which operations (or component inputs) we
-            want to trigger in each CPU instruction. Lets start with the first instruction: <code>add RX RY</code>. In order to perform this instruction
-            we need to set the ALU's first operand to RX and the second operand to RY, set the ALU's opcode to the <code>add</code> operation and finally,
+            want to trigger in each CPU instruction. Lets start with the first instruction: <code class="language-vhdl">add RX RY</code>. In order to perform this instruction
+            we need to set the ALU's first operand to RX and the second operand to RY, set the ALU's opcode to the <code class="language-vhdl">add</code> operation and finally,
             enable the accumulator register (PACR). We can achieve this by triggering the following operations:
             <ul>
                 <li>Set the ALU's operand A selector to 0b0 (so that the routed input is RX).</li>
@@ -1124,7 +1159,7 @@
             After knowing all the relationships between each instruction, and the low-level operations that need to be triggered to preform the instruction, we can
             implement the operation decoder module by defining each operation/output as the OR between all the instructions that require that operation/output to be set to 1. 
             
-            Note that some instructions also take into account flags to trigger (or not) certain operations, like for example the instruction <code>jmpz</code>, which
+            Note that some instructions also take into account flags to trigger (or not) certain operations, like for example the instruction <code class="language-vhdl">jmpz</code>, which
             is only performed if the zero flag is set.
         </p>
 
@@ -1148,7 +1183,7 @@
             on index X (since load instructions are always performed over RX). This means that the selector of the multiplexer is simply directly wired to the first 4 bits of 
             the IDR (Instruction Data Register).
             For the second operation (routing the output of a register to the rest of the CPU) we need to consider routing both the RX and RY registers to deal
-            with instructions that operate over two operands, like <code>add RX RY</code>. This means that the selector of the multiplexer on the left is wired to the
+            with instructions that operate over two operands, like <code class="language-vhdl">add RX RY</code>. This means that the selector of the multiplexer on the left is wired to the
             first 4 bits of the IDR, and the multiplexer on the right is wired to the last 4 bits of the IDR.
         </p>
 
@@ -1162,7 +1197,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity OpDecoder is
     Port(
         
@@ -1267,10 +1302,12 @@
         </p>
 
 
+        <center>
         <figure>
             <img src="resources/dcpu/clock_state_changes.svg" width="350">
             <figcaption>Fig.15 Clock signal and state changes</figcaption>
         </figure>
+        </center>
 
         <p>
             One important detail is that the register enable operations are actually ANDed to the inverted clock signal (clock signal followed by a NOT gate) instead of the raw clock signal. 
@@ -1292,7 +1329,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-vhdl">
     entity CPU is
     Port(
         reset : in STD_LOGIC;
@@ -1325,7 +1362,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-c">
     int a = 3;
     int b = 5;
     int res = 0;
@@ -1343,7 +1380,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-arm-asm">
     # a = 3
     lod $3 RA
 
@@ -1380,7 +1417,7 @@
         </p>
 
         <pre>
-            <code>
+            <code class="language-arm-asm">
     str $V [ADR]
     lod [ADR] RX
             </code>
@@ -1388,6 +1425,7 @@
             Finally we have to translate this assembly, into machine code:
         </p>
 
+        <center>
         <figure>
             <table>
                 <thead>
@@ -1532,6 +1570,7 @@
             </tbody>
             <figcaption>Tab.5 Machine Code Translation</figcaption>
         </figure>
+        </center>
 
         <p>
             We now use this machine-code to update our ROM module with the instructions and instruction-data in the corresponding
@@ -1539,7 +1578,7 @@
         </p>
 
         <pre>
-            <code>    
+            <code class="language-vhdl">    
     entity ROM is
     Port(
         adr : in STD_LOGIC_VECTOR(7 downto 0);
@@ -1591,10 +1630,12 @@
             in Fig.16 the final result stored in register RC (representing our variable res) is 15, the result of 3*5!
         </p>
 
+        <center>
         <figure>
             <img src="resources/dcpu/mult_gtkwave.jpg" width="750">
             <figcaption>Fig.16 Multiplication program visualization using GTKWave</figcaption>
         </figure>
+        </center>
 
         <h2 id="assembler">8. Assembler</h2>
 
@@ -1614,12 +1655,12 @@
         <p>
             To make our lives easier, we can also add a set of macros to the assembler to avoid rewriting repetitive code patterns. A macro,
             is a "fake" instruction, which is expanded into a set o multiple instructions of our ISA during assembly. For example, in chapter 7
-            we saw it would be useful to have a <code>lod $V RX</code> instruction, which can be achieved by executing two existing instructions.
+            we saw it would be useful to have a <code class="language-vhdl">lod $V RX</code> instruction, which can be achieved by executing two existing instructions.
             Our assembler includes the following macros:
         </p>
 
         <pre>
-            <code>
+            <code class="language-arm-asm">
     lod $V RX (load value to register):
         lod $62 ADR
         str $V [ADR]
@@ -1658,8 +1699,8 @@
             we define an average function, which given an array and its length, calculates its average (note: ';' initiates a line comment):
         </p>
 
-        <code>
-            <pre>
+        <pre>
+        <code class="language-arm-asm">
     ; list average program
     ; avg( [5,2,9] ) = 5
     
@@ -1757,19 +1798,21 @@
         avg_ret:
     
         hlt
-            </pre>
         </code>
+    </pre>
 
         <p>
             After assembling the program into machine code and generating the ROM module, we can simulate the CPU once again in ghdl, and view
             the result of the simulation using GTKWave. As seen in Fig.17, the result stored in register RA is 5 which is indeed 
-            the average of the input array <code>arr = [5, 2, 9]</code>.
+            the average of the input array <code class="language-vhdl">arr = [5, 2, 9]</code>.
         </p>
 
+        <center>
         <figure>
             <img src="resources/dcpu/avg_gtkwave.png" width="750">
             <figcaption>Fig.17 Array average program visualization using GTKWave</figcaption>
         </figure>
+        </center>
 
         <h2 id="fpga">9. FPGA</h2>
 
@@ -1792,10 +1835,12 @@
             which gives a great introduction on the process of configuring it using Quartus II.
         </p>
 
+        <center>
         <figure>
             <img src="resources/dcpu/fpga.jpg" width="400">
             <figcaption>Fig.18 DCPU loaded on a ALTERA CycloneII EP2C5T144 FPGA</figcaption>
         </figure>
+        </center>
 
     </div>
 
