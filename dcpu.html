@@ -26,6 +26,13 @@
         <h1>DCPU - From Logic Gates to a Functioning Processor</h1>
         <p>Sep 30, 2023</p>
 
+        <center>
+            <figure>
+                <img src="resources/dcpu/intel4004_2.jpg" width="1000">
+                <figcaption>Fig.1 Intel  4004 - First Commercial Microprocessor</figcaption>
+            </figure>
+            </center>
+
         <h2>Index</h2>
 
         <ul>
@@ -44,12 +51,7 @@
 
         <h2 id="introduction">1. Introduction</h2>
 
-        <center>
-        <figure>
-            <img src="resources/dcpu/eniac.jpg" width="500">
-            <figcaption>Fig.1 ENIAC 1946 (First Programmable Digital Computer)</figcaption>
-        </figure>
-        </center>
+
 
         <p>
             Since a long time, I've wondered how computers worked. My first attempts at understanding these 
@@ -556,11 +558,11 @@
             Memory
         -->
 
+        <center>
         <figure style="display: inline-block; margin-right: 20px;">
             <img src="resources/dcpu/sr_flip_flop.svg" width="300">
             <figcaption>Fig.9 SR Flip-Flop</figcaption>
         </figure>
-        </center>
         
         <figure style="display: inline-block;">
             <table class="raw-table">
@@ -1630,7 +1632,7 @@
             Finally, we can write a simple 
             <a href="https://github.com/dma-neves/dcpu/blob/main/src/tests/main_test.vhd">VHDL test</a> for our Main module, 
             simulate it using ghdl, and view the simulation using GTKWave. As you can see
-            in Fig.16 the final result stored in register RC (representing our variable res) is 15, the result of 3*5!
+            in Fig.16 the final result stored in register RC (representing our variable res) is 15! The result of 3*5.
         </p>
 
         <center>
@@ -1699,7 +1701,7 @@
 
         <p>
             With these macros and the assembler working, we can more easily test more complex programs. In the following program
-            we define an average function, which given an array and its length, calculates its average (note: ';' initiates a line comment):
+            we define an average function, which given an array and its length, calculates its average (note: <code class="language-vhdl">;</code> initiates a line comment):
         </p>
 
         <pre>
