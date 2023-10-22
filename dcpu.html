@@ -106,7 +106,7 @@
             This would end up becoming the basis for pretty much all computer architectures,
             even to this day. The architecture proposes a system with the following essential components:
             <ul>
-                <li>A CPU (Central Processing Unit) with an ALU (Arithmetic Logic Unit) and registers. A register stores a value in a set of bits.</li>
+                <li>A processing unit with an ALU (Arithmetic Logic Unit) and registers. A register stores a value in a set of bits.</li>
                 <li>A control unit including an instruction register and a program counter.</li>
                 <li>A memory unit that stores data and instructions.</li>
                 <li>Input and output mechanisms.</li>
@@ -127,7 +127,9 @@
             Fundamentally, computers are made of billions of <a href="https://en.wikipedia.org/wiki/Transistor">transistors</a>. These transistors are combined to form logic gates. With logic gates we can build any 
             digital system, including our CPU. A logic gate takes one or two bits as input and outputs a single bit. Fig.3 shows all the basic logic gates. AND outputs
             1 if both inputs are 1 otherwise 0, OR outputs 1 if any of the inputs is 1 and XOR outputs 1 if exactly one of the inputs is 1. The bottom three logic gates
-            are the same as the first three but followed by a NOT logic gate. A NOT logic gates that takes a single input and outputs its negation. We can combine
+            are the same as the first three but followed by a NOT logic gate. A NOT logic gates that takes a single input and outputs its negation. A circle succeeding a
+            logic gate's symbol, indicates a negation.
+            We can combine
             these logic gates to add two numbers represented in binary form, perform more complex arithmetic operations, store data and even implement a modern Intel or AMD CPU if we were clever enough.
         </p>
 
@@ -201,9 +203,9 @@
         </center>               
 
         <p>
-            The first operation we'll implement is addition. If we want to add two bits A and B, we can use the circuit seen in Fig.5, a half-adder. The AND gate
-            computes the carry bit and the XOR gate the result bit. If A and B are 1 then the result is 0 and the carry is 1. If A and B are 0 then the result is 0 and the carry is 0.
-            If only A or only B is 1, the result is 1 and the carry 0. To make a full-adder (Fig.6) that takes as input two bits A and B, and a carry bit Cin, we simply chain two
+            The first operation we'll implement is addition. If we want to add two bits <code>A</code> and <code>B</code>, we can use the circuit seen in Fig.5, a half-adder. The AND gate
+            computes the carry bit and the XOR gate the result bit. If <code>A</code> and <code>B</code> are 1 then the result is 0 and the carry is 1. If <code>A</code> and <code>B</code> are 0 then the result is 0 and the carry is 0.
+            If only A or only B is 1, the result is 1 and the carry 0. To make a full-adder (Fig.6) that takes as input two bits <code>A</code> and <code>B</code>, and a carry bit <code>Cin</code>, we simply chain two
             half-adders and OR the carry bits. We can implement this circuit in VHDL as follows:
         </p>
 
@@ -237,7 +239,7 @@
         </pre>
 
         <p>
-            To make an adder that adds two numbers A and B of <math>N</math> bits, we can use <math>N</math> full-adders. We add the first bits from A and B using 
+            To make an adder that adds two numbers <code>A</code> and <code>B</code> of <math>N</math> bits, we can use <math>N</math> full-adders. We add the first bits from <code>A</code> and <code>B</code> using 
             the first full-adder, passing 0 as the carry in, then add the second bits from A and B using the second full-adder, routing the carry out from the first full-adder to
             the carry in from the second full-adder, and so on. The following code implements an 8 bit adder:
         </p>
@@ -357,8 +359,7 @@
             (each input can be a single bit or a binary value) and a selector <code>S</code>, it outputs the value <code>In</code>, where <code>n</code> is the index selected by <code>S</code>. This is,
             if <code>S</code> is <code>0b0</code> the output is <code>I0</code>, if <code>S</code> is <code>0b1</code> the output is <code>I1</code>, if <code>S</code> is <code>0b10</code> the output is <code>I2</code> and so on. Such a component can be easily implemented
             using AND gates connecting each input <code>I</code> with the necessary <code>S</code> value (NOT gates used for the bits that should be zero) and a final OR gate
-            combining all the intermediate outputs. Fig.7 shows a multiplexer circuit with 4 input values and a two bit selector S. Note that in such a diagram, a
-            circle preceding a gate's input represents that the input is flipped (NOT gate). This multiplexer can be implemented as follows:
+            combining all the intermediate outputs. Fig.7 shows a multiplexer circuit with 4 input values and a two bit selector S. This multiplexer can be implemented as follows:
         </p>
 
         <pre>
@@ -460,12 +461,12 @@
         </center>
         
         <p>
-            Fig.8 shows a diagram of the ALU that implements these 8 operations. It receives two 8 bit input operands A and B as well as an input opcode. For
+            Fig.8 shows a diagram of the ALU that implements these 8 operations. It receives two 8 bit input operands <code>A</code> and <code>B</code> as well as an input opcode. For
             output, we have a single 8 bit result and three flags: overflow, negative and zero.
             The ALU contains the Adder, Negate, NOT, OR and AND components we
-            discussed earlier, a set of multiplexers and some auxiliary gates. The first operand of the Adder is always A, while the second is selected by a multiplexer
-            that can either select B (add), 1 (inc), -1 (dec) or the result of the Negate component (sub). The Negate input is selected by a multiplexer that can either
-            select A (neg) or B (sub). All the other components simply operate over A and B (operations: not, and, or). The final result is selected by a multiplexer
+            discussed earlier, a set of multiplexers and some auxiliary gates. The first operand of the Adder is always <code>A</code>, while the second is selected by a multiplexer
+            that can either select <code>B</code> (add), <code>1</code> (inc), <code>-1</code> (dec) or the result of the Negate component (sub). The Negate input is selected by a multiplexer that can either
+            select <code>A</code> (neg) or <code>B</code> (sub). All the other components simply operate over <code>A</code> and <code>B</code> (operations: not, and, or). The final result is selected by a multiplexer
             that can either select the Negate output (neg), the NOT output (not), the AND output (and), the OR output (or) or the Adder output (operations: add, inc, dec, sub).
             The overflow flag can be set either by the Adder component or the Negate component, and the negative and zero flag simply check if the result is negative or
             zero.
@@ -621,7 +622,7 @@
 
         <p>
             Given that computer programs must perform a sequence of instructions, and not just a single operation, CPUs need some sort of sequencing mechanism.
-            This is where the clock comes in. Inside every computer is a clock generator, usually a crystal oscillator, that generates a pulse (or voltage)
+            This is where the clock comes in. Inside every computer is a clock generator, usually a <a href="https://en.wikipedia.org/wiki/Crystal_oscillator">crystal oscillator</a>, that generates a pulse (or voltage)
             at even intervals as seen in Fig.10. The CPU can then use this clock to perform an instruction step on each clock cycle (More information on this in chapter 6). This means that
             state changes inside a CPU must also occur synchronously with the clock. Ideally, the state of a Flip-Flop inside a CPU, should only be updated during a clock pulse
             (a change of signal from 0 to 1, or from 1 to 0) to eliminate any glitches related to signal propagation delays and to ensure state changes happen in sync with
@@ -1030,7 +1031,8 @@
             The last piece of the puzzle is the Control Unit which orchestrates all the other components of the CPU taking into account the previous ISA. It takes
             a clock signal as input and performs an instruction step on each clock cycle. An instruction can usually be split into three
             logical steps: fetch (get the instruction from memory), decode (decode the instruction) and execute (trigger the inputs of the
-            other components of the CPU). In our CPU, each instruction will be composed of 7 steps:
+            other components of the CPU). In our CPU, each instruction will be composed of 7 steps (we have some extra steps given that we separated the instructions
+            from the instructions' data):
 
             <ol>
                 <li><b>Fetch instruction:</b> Fetch the instruction stored in the memory address <code>[IC]</code> in the ROM module to the IR register.</li>
@@ -1417,8 +1419,9 @@
         </pre>
 
         <p>
-            Note that loading a specific value to a specific register (lod $V RX) is actually achieved using two instructions 
-            (assuming ADR is set to an unused address like 0x3e):
+            Note that loading a specific value to a specific register (<code>lod $V RX</code>) is actually achieved using two instructions instead of the single
+            instruction like we used in the previous code. This operation can be performed as follows
+            (assuming ADR is set to an unused address like <code>0x3e</code>):
         </p>
 
         <pre>
@@ -1651,8 +1654,8 @@
             for our ISA in python. I won't give a detailed guide on how to implement
             such an assembler given that this could become a whole new guide of its own. Another reason, is that the assembler I've
             implemented is of relatively low quality as it doesn't really follow the usual structure of a compiler/assembler 
-            (lexer, parser, code generator, etc). Rather just performs a bunch of string manipulations directly. However, it gets the job done.
-            I also included a ROM generator, which turns the outputed machine code from the assembler, into a VHDL ROM module which we
+            (lexer, parser, code generator, etc), rather, it just uses a bunch of string manipulations directly. However, it gets the job done.
+            I also included a ROM generator which turns the outputed machine code from the assembler into a VHDL ROM module which we
             can load into our VHDL project.
             
         </p>
