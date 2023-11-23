@@ -378,19 +378,19 @@
     
     I0_s(0) <= I0(0) and (not sel(0)) and (not sel(1));
     //I0_s(...) <= ...
-    I0_s(8) <= I0(8) and (not sel(0)) and (not sel(1));
+    I0_s(7) <= I0(7) and (not sel(0)) and (not sel(1));
     
     I1_s(0) <= I1(0) and (not sel(0)) and sel(1);
     //I1_s(...) <= ...
-    I1_s(8) <= I1(8) and (not sel(0)) and sel(1);
+    I1_s(7) <= I1(7) and (not sel(0)) and sel(1);
     
     I2_s(0) <= I2(0) and sel(0)) and (not sel(1));
     //I2_s(...) <= ...
-    I2_s(8) <= I2(8) and sel(0)) and (not sel(1));
+    I2_s(7) <= I2(7) and sel(0)) and (not sel(1));
     
     I3_s(0) <= I3(0) and sel(0)) and sel(1);
     //I3_s(...) <= ...
-    I3_s(8) <= I3(8) and sel(0)) and sel(1);
+    I3_s(7) <= I3(7) and sel(0)) and sel(1);
     
     end Behavioral;                
             </code>
@@ -1783,9 +1783,9 @@
             comes in handy. I've implemented a simpler 
             <a href="https://github.com/dma-neves/dcpuAssembler/">assembler</a> 
             for our ISA in python. I won't give a detailed guide on how to implement
-            such an assembler given that this could become a whole new guide of its own. Another reason, is that the assembler I've
+            such an assembler given that this could become a whole new guide on its own. Another reason, is that the assembler I've
             implemented is of relatively low quality as it doesn't really follow the usual structure of a compiler/assembler 
-            (lexer, parser, code generator, etc), rather, it just uses a bunch of string manipulations directly. However, it gets the job done.
+            (lexer, parser, code generator, etc), but rather, it just uses a bunch of string manipulations to get the job done.
             I also included a ROM generator which turns the outputed machine code from the assembler into a VHDL ROM module which we
             can load into our VHDL project.
             
@@ -1834,7 +1834,9 @@
         </pre>
 
         <p>
-            With these macros and the assembler working, we can more easily test more complex programs. In the following program
+            Another quality of life improvement offered by the assembler, is allowing the programmer to use labels instead of addresses for jump instructions. During
+            assembly the labels are converted to the corresponding memory address.
+            With all these features, we can more easily test more complex programs. In the following program
             we define an average function, which given an array and its length, calculates its average (note: <code class="language-vhdl">;</code> initiates a line comment):
         </p>
 
