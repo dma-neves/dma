@@ -321,7 +321,7 @@
                 <li>Add 1 to the entire inverted number, ignoring any overflow</li>
             </ul>
             This encoding might seem a bit odd, but it actually takes advantage of some nice properties. Namely, adding two numbers in this representation works perfectly
-            with both negative and positive numbers. For example adding <code>4</code> (<code>0b00000100</code>) to <code>-3</code> (<code>0b11111101</code>), this is <code>4-3</code>, gives us <code>0b11111111</code>, which encodes the value <code>-1</code>.
+            with both negative and positive numbers. For example adding <code>3</code> (<code>0b00000011</code>) to <code>-4</code> (<code>0b11111100</code>), this is <code>3-4</code>, gives us <code>0b11111111</code>, which encodes the value <code>-1</code>.
             By adding a module to our ALU that negates a value, we can then implement subtractions by performing negations followed by additions. This is, <code>A-B</code>
             can be implemented as <code>A+(-B)</code>. A negation module can be implement as follows using the previous adder and an 8 bit NOT operator:
         </p>
