@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>DMA</title>
+	<link rel="stylesheet" href="styles/main.css" type = "text/css">
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Exo&display=swap" rel="stylesheet">
+
+	<link href="styles/prism.css" rel="stylesheet" />
+
+    <script src="scripts/prism.js"></script>
+    <script src="scripts/main.js"></script>
+
+</head>
+
+<body>
+
+    <div class="content">
+        
+        <h1>Raptor - A High Level Algorithmic Skeleton CUDA Library</h1>
+        <p>
+            Apr 7, 2024 |
+            Github: <a href="https://github.com/dma-neves/raptor">github.com/dma-neves/raptor</a>
+        </p>
+
+        <figure style="margin: 0">
+            <img src="resources/raptor/raptor_text_logo_black.png" width="400">
+        </figure>
+
+        <h2>Index</h2>
+
+        <ul>
+            <li><a href="#introduction">1. Introduction</a></li>
+            <li><a href="#basics">2. Basics</a></li>
+            <li><a href="#skeletons">3. Skeletons</a></li>
+            <li><a href="#collections">4. Collections</a></li>
+            <li><a href="#targets">5. Targets</a></li>
+            <li><a href="#function">6. Raptor Function</a></li>
+            <li><a href="#raptorvsthrust">7. Raptor vs Thrust</a></li>
+            <li><a href="#performance">8. Performance</a></li>
+
+        </ul>
+
+        <h2 id="introduction">1. Introduction</h2>
+
+        <p>
+            CUDA is a great tool for accelerating massively paralelizable applications on the GPU. However, its utilization can be complex and verbose.
+            Writing programs in plain CUDA involves: management of host and device memory, kernel execution and synchronization, grid and block size 
+            definition, etc. Some higher level libraries, such as thrust, have already simplified and abstracted a lot of
+            these concepts, allowing the programmer to focus on the problem related logic, instead of constantly having to deal with all of the GPU intricacies. Even so, we
+            believe we can go further. Raptor is a high level algorithmic skeleton CUDA library which allows the user to define all their
+            parallel computations using a set of smart containers, algorithmic skeletons, and raptor functions, while achieving performance 
+            comparable to programs written in thrust.
+        </p>
+
+        <p>
+            Raptor's syntax and core design features are taken from <a href="https://docentes.fct.unl.pt/p161/software/marrow-skeleton-framework">marrow</a>.
+            Simillarly to marrow, raptor provides a set of smart containers (<code>vector</code>, <code>array</code>, <code>vector&lt;array&gt;</code>, <code>scalar</code>) and skeletons
+            (<code>map</code>, <code>reduce</code>, <code>scan</code>, <code>filter</code>, <code>sort</code>) that can be applied over the smart containers. Containers can store the 
+            data both on the
+            host (CPU) and device (GPU), and expose a seemingly unified memory address space. Skeletons are executed on the device. Any necessary containers are
+            automatically and lazily allocated and uploaded whenever a skeleton is executed. Similarly to marrow,
+            raptor also provides a generic function primitive. A raptor function allows one to specify a generic device function that can operate over
+            multiple raptor containers of different sizes & types, basic data types, and GPU coordinates.
+        </p>
+
+        <p>
+            Raptor was developed as a simplified and lighter weight alternative to marrow (when using a CUDA backend). For complex irregular applications 
+            (complex data-dependencies; lots of potential for communication/computation overlap; nested operations over containers), marrow can achieve better 
+            performance. For more regular and bulk-synchronous applications, raptor can take advantage of a minimal runtime and a more concise code base.
+        </p>
+
+        <p>
+            Before proceeding, note that this guide assumes a basic knowledge of C++ (including functors and basic templates), CUDA, and common high-order functions such as map, filter, reduce, scan.
+        </p>
+
+        <h2 id="basics">2. Basics</h2>
+
+        <p>
+            Lets start with one of the most basic parallel programs, saxpy. saxpy is a function that takes as input two vectors of equal size <code>x</code> and <code>y</code>, and
+            a single scalar <code>a</code>, and outputs <code>a*x + y</code>, i.e the output is a vector <code>res</code>, for which <code>res[i] = x[i]*a + y[i]</code>,
+            for all indices <code>i</code> from <code>0</code> to the size of the vectors.
+        </p>
+
+        <pre>
+            <code class="language-c">
+struct saxpy {
+
+    __device__
+    float operator()(float x, float y, float a) {
+
+        return a*x + y;
+    }
+};
+
+int main() {
+
+	int n = 1e6;
+    float a = 2.f;
+    vector&lt;float&gt; x(n);
+    vector&lt;float&gt; y(n);
+    x.fill(4.f);
+    y.fill(3.f);
+
+
+    vector&lt;float&gt; res = map&lt;saxpy&gt;(x,y,a);
+}
+            </code>
+        </pre>
+
+        <p>
+            As we can see, compared to a <a href="https://developer.nvidia.com/blog/easy-introduction-cuda-c-and-c/">CUDA implementation</a>, raptor abstracts all host-device
+            communication and setup. The programmer simply defines a set of containers and applies skeletons over them. Raptor then parallelizes these computations on the GPU.
+        </p>
+
+        <p>
+            We start by defining a device functor <code>saxpy</code> that describes the computation of a single element of the result. In the <code>main</code>
+            function, we start by initialing our inputs using a similar syntax to the standard C++ library. Note that this code assumes we are using the raptor namespace,
+            otherwise, we would instantiate a raptor vector as <code>raptor::vector</code>. In the last line of <code>main</code>, we apply the <code>map</code> skeleton
+            to the three inputs, using the <code>saxpy</code> functor as the mapping function, and store the result in the <code>res</code> vector. 
+        </p>
+
+        <p>
+            In the background, 
+            <code>x</code> and <code>y</code> are initially allocate and filled on the host (we could also decide to fill them directly on the device - more on this later),
+            then, when the <code>map</code> skeleton is invoked, the vectors are uploaded to the device, and raptor launches a CUDA kernel that applies the <code>saxpy</code>
+            functor to all the elements of <code>x</code> and <code>y</code>. Additionally, raptor also allocates the result vector automatically. Its worth noting
+            that even though the <code>saxpy</code> functor takes three floats as input, we pass to the <code>map</code> skeleton two vectors of floats, and an additional single float.
+            At compile time, raptor resolves all of the skeleton and function arguments. Raptor containers are distributed to the kernel threads (one element per thread), 
+            and basic data types (like the argument <code>a</code>) are passed directly.
+        
+        </p>
+
+        <p>
+            We now present a slightly more complex program that takes advantage of multiple skeletons: the discrete riemann sum.
+            This program computes a discrete area under a function, i.e an approximation of a function's integral. We define
+            the integrating function in the device function <code>fun</code>. The body of <code>fun</code> can be replaced with any desired function.
+        </p>
+
+        <pre>
+            <code class="language-c">
+__device__
+static float fun(float x) {
+    return pow(x, 4.f) * (-5.56) + pow(x, 3.f) * 1.34 + x * x *  3.45 + x * 5 + 40;
+}
+
+struct compute_area {
+    __device__
+    float operator() (float index, int start, float dx) {
+        float x = (float)start + index*dx;
+        float y = fun(x);
+        return dx * y;
+    }
+};
+
+
+float riemann_sum(int start, int end, int samples) {
+
+    float dx = (float)(end - start) / (float)(samples);
+    vector&lt;float&gt; indexes = iota&lt;float&gt;(samples);
+    vector&lt;float&gt; vals = map&lt;compute_area&gt;(indexes,start, dx);
+    scalar&lt;float&gt; result = reduce&lt;sum&lt;float&gt;&gt;(vals);
+    return result.get();
+}
+            </code>
+        </pre>
+
+        <p>
+            Once again, we start by defining a device functor <code>compute_area</code>, which describes the computation of a single element of the result.
+            We compute the <code>y</code> value for the corresponding <code>x</code> and multiply it by the discrete Δ<mi>x</mi>. The riemann sum is calculated as the
+            sum of all these values.
+            Inside the <code>riemann_sum</code> function,
+            we start by creating a vector of counting indices using the <code>iota</code> function. This function is provided by raptor and generates a vector of
+            size <code>N</code> with the values <code>{0,1,2,...,N}</code>. We then apply the <code>map</code> skeleton to the indices 
+            (and also pass the necessary <code>start</code> and <code>dx</code> arguments), using the <code>compute_area</code> functor as the mapping
+            function, and store the result in the <code>vals</code> vector. This vector will contain the <code>N</code> discrete areas we want to sum.
+            Finally, we sum all the values with the <code>reduce</code> skeleton, using the <code>sum</code> operator (provided by raptor) as the reducing function,
+            and store the result in a scalar. Scalars single element containers that can store a value both on the host and device. We
+            can use the <code>get</code> function to obtain the stored value.
+        </p>
+
+    <h2 id="skeletons">3. Skeletons</h2>
+    
+    <p>
+    The current supported skeletons are:
+    </p>
+
+    <ul>
+        <li><code>map</code>: This skeleton can receive any number of raptor containers of any type (but should have same size), and any number of basic data types. The main type restriction is tied
+        to the first parameter which must be a collection (<code>vector</code>, <code>array</code> or <code>vector&lt;array&gt;</code>) dictating the return type.
+        Additionally, <code>map</code>
+        receives as a template parameter a device functor describing the mapping function.</li>
+        <li><code>filter</code>: This skeleton must receive either a collection and a filtering functor, or two collections of equal size. The first  being the collection to filter, and the second a collection of integers
+        containing <code>0</code>s and <code>1</code>s. A value of <code>0</code> excludes the corresponding element, while a value of <code>1</code> includes the corresponding element.</li>
+        <li><code>reduce</code>: This skeleton must receive a single collection, and receive as a template parameter a device functor describing the reducing function.</li>
+        <li><code>scan</code>: This skeleton must receive a single collection, and receive as a template parameter a device functor describing the scanning function.</li>
+        <li><code>sort</code>: This skeleton must receive a single collection of comparable types.</li>
+    </ul>
+
+    <p>
+        Besides these skeletons, raptor also provides a set of common operators which can be used alongside the <code>map</code>, <code>reduce</code>, and <code>scan</code> skeletons.
+        These operators include: <code>sum</code>, <code>sub</code>, <code>mult</code>, <code>max</code> and <code>min</code>.
+    </p>
+
+
+
+    <h2 id="collections">4. Collections</h2>
+
+    <h3>4.1. Vector & Arrays</h2>
+
+        <p>
+            Both <code>rator::vector</code> and <code>raptor::array</code> follow a similar syntax to the <code>std::vector</code> and <code>std::array</code> respectively.
+            This means these collections include basic functions such as <code>size</code>, <code>fill</code>, <code>[]</code>, <code>push_back</code>, etc. 
+        </p>
+
+        <p>
+            The main difference, from a user perspective, lies in the <code>get</code> and <code>set</code> functions. In order to read a value from a collection, we can use the <code>get</code>
+            function. Updating an element can be performed using the <code>set</code> function. The <code>set</code> function marks the collection (or element) as dirty, meaning 
+            that if a skeleton is later applied over said collection, it will be properly synchronized to the device. Collections also support the subscript operator <code>[]</code>.
+            The subscript operator is similar to the <code>get</code> function but marks the container (or element) as dirty. This means that writes: <code>col.set(i, val)</code> 
+            can alternatively be expressed as: <code>col[i] = val</code>.
+        </p>
+
+        <p>
+            Internally, raptor stores two versions of a collection, a host version, and a device version. Typically, updates are performed on the host and later synchronized to the device.
+            However, sometimes containers are never accesses on the host or vice versa. Raptor adopts an optimization such that memory is only allocated whenever it is accessed or
+            manipulated. This means, that a container can be either allocated only on the host, only on the device, on both, or even not allocated at all. For example, in the previous saxpy example,
+            we instantiate the vector <code>x</code> using: <code>vector&lt;float&gt; x(n)</code>. This vector is initially not allocated. When we fill (host fill) it with the value <code>4.f</code>,
+            the vector is automatically allocated on the host. We then apply the <code>map</code> skeleton over it: 
+            <code>map&lt;saxpy&gt;(x,y,a)</code>. This results in the container being automatically allocated on the device. Since the vector was already allocated and dirtied on
+            the host, the contents of the the host vector is also transferred to the device after allocation.
+        </p>
+
+        <p>
+            It is important to note that raptor containers only store pointers (smart pointers) to the actual data. This means that the containers are extremely light
+            objects that can easily be copied. All copies are therefore shallow. In order to perform a deep copy, we must use the provided <code>copy</code> function:
+            <code>a.copy(b)</code>.
+        </p>
+
+        <p>
+            When we instantiate a raptor collection, we can optionally set its synchronization granularity by passing a <code>sync_granularity</code> enum value to
+            the constructor. The default granularity is coarse grain. A coarse grain granularity implies that whenever a collection has been manipulated on the host
+            and must be uploaded to the device, the entire collection is uploaded. For example, if we change the first element of a large vector that is already allocated
+            on the host and device, and then apply a skeleton over it, the entire vector is uploaded. On the other hand, a fine granularity implies that whenever a collection has been 
+            manipulated on the host and must be uploaded to the device, only the dirty elements are uploaded. Returning to the previous example, only the first
+            element would be uploaded as the rest would remain unchanged. This might be useful when dealing with vectors that store heavy objects and are subjected
+            to sporadic updates.
+        </p>
+
+    <!-- -> vector & array basics
+    -> get, set, []
+    -> light copies
+    -> fill, copy
+    -> demonstrate auto synchronization
+    -> synchronization granularity
+    -> notes: light copies; return type of map -->
+
+    <h3>4.2. Vector of Arrays</h2>
+
+    <p>
+        GPUs work best when dealing with contiguous data, however, some problems require dynamic data structures that can efficiently mutate. Such data structures can often
+        be implemented using multiple fixed size contiguous blocks. For example, a linked list is usually not well suited for a GPU environment, a blocked adjacency list on the
+        other hand, can offer both good memory locality (depending on the size of the blocks), and extensive mutability. For this reason, raptor offers the <code>vector&lt;array&lt;N,T&gt;&gt;</code>
+        collection. This collection allows us to define a vector of fixed size arrays that can efficiently grow, shrink, and be updated.
+    </p>
+
+    <figure style="margin: 0">
+        <img src="resources/raptor/host_device_memory.png" width="900">
+        <figcaption>Fig 1: Host device memory layout.</figcaption>
+    </figure>
+
+    <p>
+        Figure 1 displays the memory layout of a vector and a vector of arrays that have been allocated both on the host and device. 
+        <!-- As we can see, on the host we store two
+        data structures: a contiguous block of memory that stores the actual data (lets call it <code>var_d</code>), and a vector of arrays (lets call it <code>var_m</code>). 
+        The arrays stored in <code>var_m</code> only contain metadata  (such as size, dirty flag, etc) and a pointer to <code>var_d</code>. -->
+
+
+        As we can see, a normal collection, such as <code>vec</code>, is simply stored as a contiguous array on the
+        host, and has a replica stored on the device. The <code>vector&lt;array&lt;N,T&gt;&gt;</code> has a more nuanced storage layout.
+        Assuming a fixed array size of <code>N</code> and a variable vector size of
+        <code>S</code>, a <code>vector&lt;array&lt;N,T&gt;&gt;</code>  is stored on the host using two data structures. A contiguous block of data of length <code>N*S</code>, and a vector
+        of arrays of length <code>S</code>. These arrays only contain metadata, and point
+        to the contiguous memory block. This allows for user-friendly manipulations of the data structure on the host, while allowing for
+        efficient memory transfers and memory accesses on the device. If
+        the host would only store a vector of arrays containing the actual data,
+        transferring the whole vector to the device would require <code>N</code> separate memory transfers, rather than a single large memory transfer
+        of <code>N*S*sizeof(T)</code> bytes. Furthermore, by storing a vector of arrays on the host, we gain the ability to track individual dirty arrays.
+        When synchronizing the vector of arrays to the device, assuming it has already been allocated, only the dirty arrays need to be
+        synchronized, rather than the entire vector. This targeted synchronization approach enhances efficiency by minimizing unnecessary
+        data transfers. This data structure is defined to use a fine synchronization granularity by default.
+    </p>
+
+    <h2 id="targets">5. Targets</h2>
+
+    Both the <code>copy</code> and <code>fill</code> functions perform heavy operations. For this reason, raptor performs most of these operations
+    asynchronously (the exceptions are host fill with values different than <code>0</code> and host fills using functors). If another operation is 
+    performed on a container that is still performing such an operation, synchronization is automatically insured.
+    Additionally, raptor allows the user to specify the target of these operations. The targets being either the host or the device. The default target
+    is always the host, but it can be overridden via a template parameter. Returning to our saxpy example, we could fill <code>x</code> and <code>y</code>
+    directly on the device using:
+
+    <pre>
+        <code class="language-c">
+x.fill&lt;DEVICE&gt;(4.f);
+y.fill&lt;DEVICE&gt;(3.f);
+        </code>
+    </pre>
+
+    <p>
+        In the future we would like to additionally support a lazy target, that would perform these operations lazily either on the host or device whenever
+        a container is accessed or allocated in either target.        
+    </p>
+
+
+    <h2 id="function">6. Raptor Functions</h2>
+
+    <p>
+        Even though we can express complex computations using the provided skeletons, in some occasions, we require more generic functions
+        that can operate over raptor containers and GPU coordinates. For this purpose, raptor provides the <code>raptor::function</code> primitive. A raptor
+        function takes as parameters the GPU coordinates, any number of raptor containers of any type and size, and any number of basic data types.
+    
+        Moreover, the parameters of a raptor function can optionally be marked as <code>in</code>,
+        <code>out</code> or <code>inout</code>, to specify if a parameter is intended as an input container, an output container or both.
+        Containers are handled as input parameters by default.
+        The geometry of the function, i.e the grid geometry,
+        is implicitly calculated by raptor, but can also be set by the programmer. We now present the montecarlo pi estimation example that is implemented using
+        a raptor function:
+    </p>
+
+    <pre>
+        <code class="language-c">
+struct montecarlo_fun : raptor::function&lt;montecarlo_fun, out&lt;float*&gt;&gt; {
+
+    __device__
+    void operator()(coordinates_t tid, float* result) {
+
+        float x = raptor::random::rand(tid);
+        float y = raptor::random::rand(tid);
+
+        result[tid] = (x * x + y * y) &lt; 1;
+    }
+};
+
+float pi_montecarlo_estimation(int size) {
+
+    montecarlo_fun montecarlo;
+    // montecarl.set_size(size); /*optional*/
+    raptor::vector&lt;float&gt; result(size);
+    montecarlo.apply(result);
+    raptor::scalar&lt;float&gt; pi = raptor::reduce&lt;sum&lt;float&gt;&gt;(result);
+    return pi.get() / (float)size * 4.f;
+}
+        </code>
+    </pre>    
+
+
+    <p>
+        In this listing we define a raptor function <code>montecarlo_fun</code> that takes as input the GPU coordinates and a
+        <code>vector&lt;float&gt;</code> to store the results. As we can see, whenever we pass a container to a raptor function,
+        the function must receive the container's respective device type, in this case, a float pointer. Given that <code>results</code>
+        is the only container passed to the function, the function's size is automatically set to be equal to the size of the
+        <code>result</code> vector. We could also set it manually using the <code>set_size</code> function. The default function size is
+        always set to the size of the smallest collection passed as an argument.
+    </p>
+    
+    <p>
+        To call a raptor function, we simply instantiate it, and call the <code>apply</code> function, passing it all necessary parameters. In this example, 
+        in order to compute the estimation of pi, we apply the <code>montecarlo_fun</code>, then
+        sum all the results using the <code>reduce</code> skeleton, and device it by <code>4</code>.
+    </p>
+
+    <p>
+        Any raptor function must
+        extend the the <code>raptor::function</code> class which receives as a template parameter the functor's type (in this case <code>montecarlo_fun</code>).
+        Optionally, we can also pass as template parameters the types of all of the raptor function's arguments (except for the GPU coordinates).
+        This allows us to mark any parameter as <code>in</code>, <code>out</code>, or <code>inout</code>. If we don't provide these template parameters,
+        all of the function's parameters are handled as input parameters. Since we solely write to the <code>result</code> vector, we mark it as
+        <code>out</code>. In case we didn't mark this parameter as an output parameter, and later wanted to access it on the host, we would have to
+        manually mark it as dirty on the device for the proper synchronization to take place. Additionally if <code>result</code> was defaulted to
+        an input parameter, its contents would be uploaded before the function execution. This is of course unnecessary given that we don't read from the
+        <code>result</code> container in the function, we only write to it. In practice, regardless of how we mark parameters,
+        allocation is always insured automatically, however, an input parameter is additionally uploaded before the execution of the function, and an
+        output parameter is marked as dirty on the device. Output parameters that are later accessed on the host undergo a download.
+    </p>
+
+
+    <p>As a final example, we demonstrate how the saxpy program can alternatively be written using a raptor function:</p>
+    
+
+    <pre>
+        <code class="language-c">
+struct saxpy_fun : function&lt;saxpy_fun, in&lt;float&gt;, in&lt;float*&gt;, inout&lt;float*&gt;&gt; {
+    __device__
+    void operator()(coordinates_t tid, float a, float* x, float* y) {
+        y[tid] = a * x[tid] + y[tid];
+    }
+};
+
+int main() {
+
+    int n = 1e6;
+    float a = 2.f;
+    vector&lt;float&gt; x(n);
+    vector&lt;float&gt; y(n);
+    x.fill&lt;DEVICE&gt;(4.f);
+    y.fill&lt;DEVICE&gt;(3.f);
+
+    saxpy_fun saxpy;
+    saxpy.apply(x,y,a);
+}
+        </code>
+    </pre>       
+
+    <!-- -> introduction
+    -> example
+    -> container distribution vs pointer passage
+    -> function size and default size
+    -> in, out, inout params -->
+
+    <h2 id="raptorvsthrust">7. Raptor vs Thrust</h2>
+
+    <p>
+        You may note that there already exists a standard high-level parallel algorithms library that tries to achieve some of the same goals as raptor: 
+        <a href="https://developer.nvidia.com/thrust">thrust</a>. The main differentiating features of raptor are:
+    </p>
+
+    <ul>
+        <li>The adoption of a unified address space, where containers ensure the necessary synchronization automatically in a lazy manner. Containers
+            can be seemingly accessed on both host and device.
+        </li>
+        <li>Multiple container types: <code>vector</code>, <code>array</code>, <code>scalar</code>, <code>vector&lt;array&gt;</code>. </li>
+        <li>Ability to specify a synchronization granularity. A fine granularity allows for enhanced efficiency by minimizing unnecessary
+            data transfers. </li>
+        <li>More powerful generic function primitive. The raptor function primitive is more flexible than the analogous thrust transform operator.
+            Additionally, raptor abstracts host-device memory management related to function execution via the (optional) <code>in</code>, <code>out</code> and 
+            <code>inout</code> primitives.
+        </li>
+    </ul>
+
+    <h2 id="performance">8. Performance</h2>
+
+</div>
+
+</body>
+
+</html>

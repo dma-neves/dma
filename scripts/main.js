@@ -4,10 +4,11 @@ NAVBAR = `
 </header> -->
 
 <nav>
-    <a href="index.html">Home</a>
+    <a href="index.html">DMA</a>
     <a href="https://www.github.com/dma-neves">Github</a>
+    <a href="publications.html">Publications</a>
     <a href="projects.html">Projects</a>
-    <a href="posts.html">Posts</a>
+    <a href="posts.html">Blog</a>
     <!--<a href="content.html">Content</a>-->
     <!--<a href="lists.html">Lists</a>-->
     <a href="contacts.html">Contacts</a>

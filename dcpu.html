@@ -17,6 +17,9 @@
     <script src="scripts/prism.js"></script>
     <script src="scripts/main.js"></script>
 
+
+    
+
 </head>
 
 <body>
@@ -53,8 +56,6 @@
         </ul>
 
         <h2 id="introduction">1. Introduction</h2>
-
-
 
         <p>
             Since a long time, I've found computers fascinating machines and wondered how they worked. My first attempts at understanding these 
@@ -242,7 +243,7 @@
         </pre>
 
         <p>
-            To make an adder that adds two numbers <code>A</code> and <code>B</code> of <math>N</math> bits, we can use <math>N</math> full-adders. We add the first bits from <code>A</code> and <code>B</code> using 
+            To make an adder that adds two numbers <code>A</code> and <code>B</code> of <code>N</code> bits, we can use <code>N</code> full-adders. We add the first bits from <code>A</code> and <code>B</code> using 
             the first full-adder, passing 0 as the carry in, then add the second bits from A and B using the second full-adder, routing the carry out from the first full-adder to
             the carry in from the second full-adder, and so on. The following code implements an 8 bit adder:
         </p>
@@ -278,7 +279,7 @@
         </pre>
 
         <p>
-            Logic operations on <math>N</math> bit numbers are easily implemented by performing the operation (like AND, OR, NOT, etc) on all the <math>N</math> inputs.
+            Logic operations on <code>N</code> bit numbers are easily implemented by performing the operation (like AND, OR, NOT, etc) on all the <code>N</code> inputs.
             Since they are logic operations, they are directly implemented by a single logic gate. For example an AND operation between two 8 bit numbers
             can be implemented as follows:
         </p>
@@ -753,7 +754,7 @@
             A memory module can be implemented as a large array of registers. In a memory module, each register must be accessible by an address.
             The first register can be set to address <code>0b00000000</code>, the second register to address <code>0b00000001</code> and so on. This addressing system can be
             achieved by connecting the registers to a large demultiplexer. A demultiplexer implements the inverse operation of a multiplexer. With a
-            selector (the address), the demultiplexer routs an input value to one of the <math>N</math> outputs (<math>N</math> registers for example). Note that there are more efficient ways 
+            selector (the address), the demultiplexer routs an input value to one of the <code>N</code> outputs (<code>N</code> registers for example). Note that there are more efficient ways 
             (using less logic gates) of implementing a memory module. Since the focus of this project is the implementation of a CPU, and not necessarily memory
             modules, I implemented the 
             <a href="https://github.com/dma-neves/dcpu/blob/main/src/Memory/RAM64.vhd">RAM</a> and 
