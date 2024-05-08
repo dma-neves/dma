@@ -59,7 +59,7 @@
 
         <p>
             Raptor's syntax and core design features are taken from <a href="https://docentes.fct.unl.pt/p161/software/marrow-skeleton-framework">marrow</a>.
-            Simillarly to marrow, raptor provides a set of smart containers (<code>vector</code>, <code>array</code>, <code>vector&lt;array&gt;</code>, <code>scalar</code>) and skeletons
+            Similarly to marrow, raptor provides a set of smart containers (<code>vector</code>, <code>array</code>, <code>vector&lt;array&gt;</code>, <code>scalar</code>) and skeletons
             (<code>map</code>, <code>reduce</code>, <code>scan</code>, <code>filter</code>, <code>sort</code>) that can be applied over the smart containers. Containers can store the 
             data both on the
             host (CPU) and device (GPU), and expose a seemingly unified memory address space. Skeletons are executed on the device. Any necessary containers are
@@ -123,7 +123,7 @@ int main() {
 
         <p>
             In the background, 
-            <code>x</code> and <code>y</code> are initially allocate and filled on the host (we could also decide to fill them directly on the device - more on this later),
+            <code>x</code> and <code>y</code> are initially allocated and filled on the host (we could also decide to fill them directly on the device - more on this later),
             then, when the <code>map</code> skeleton is invoked, the vectors are uploaded to the device, and raptor launches a CUDA kernel that applies the <code>saxpy</code>
             functor to all the elements of <code>x</code> and <code>y</code>. Additionally, raptor also allocates the result vector automatically. Its worth noting
             that even though the <code>saxpy</code> functor takes three floats as input, we pass to the <code>map</code> skeleton two vectors of floats, and an additional single float.
