@@ -162,3 +162,22 @@ tr:nth-child(even) {
 
     font-family: 'Consolas', monospace;
 }
+
+.figcontainer {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px auto;
+    max-width: 1000px;
+}
+
+.code-container {
+    display: flex;
+    justify-content: space-between;
+    /* margin-bottom: 20px; */
+}
+.code {
+    flex-basis: 45%;
+    border: 1px solid #ccc;
+    padding: 10px;
+    overflow-x: auto;
+}

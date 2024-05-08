@@ -41,6 +41,7 @@
             <li><a href="#function">6. Raptor Function</a></li>
             <li><a href="#raptorvsthrust">7. Raptor vs Thrust</a></li>
             <li><a href="#performance">8. Performance</a></li>
+            <li><a href="#conclusions">9. Conclusions</a></li>
 
         </ul>
 
@@ -69,7 +70,7 @@
 
         <p>
             Raptor was developed as a simplified and lighter weight alternative to marrow (when using a CUDA backend). For complex irregular applications 
-            (complex data-dependencies; lots of potential for communication/computation overlap; nested operations over containers), marrow can achieve better 
+            (complex data-dependencies; lots of potential for communication/computation overlap; nested operations over containers), marrow can potentially achieve better 
             performance. For more regular and bulk-synchronous applications, raptor can take advantage of a minimal runtime and a more concise code base.
         </p>
 
@@ -269,7 +270,7 @@ float riemann_sum(int start, int end, int samples) {
 
     <figure style="margin: 0">
         <img src="resources/raptor/host_device_memory.png" width="900">
-        <figcaption>Fig 1: Host device memory layout.</figcaption>
+        <figcaption><b>Fig 1</b>: Host device memory layout.</figcaption>
     </figure>
 
     <p>
@@ -441,7 +442,179 @@ int main() {
         </li>
     </ul>
 
+    <p>
+        To illustrate some of the advantages of utilizing raptor over thrust from a user's standpoint, we compare the implementations of the saxpy algorithm.
+    </p>
+
+
+
+
+
+    <div class="code-container">
+        <div class="code">
+            <pre>
+                <code class="language-c">
+// Thrust
+struct saxpy_fun : public thrust::binary_function&lt;float,float,float&gt;
+{
+    const float a;
+    saxpy_fun(float a) : a(a) {}
+
+    __device__
+    float operator()(float x, float y) const {
+        return a * x + y;
+    }
+};
+
+int main() {
+    int size = 1e6;
+    thrust::device_vector&lt;float&gt; x(size);
+    thrust::device_vector&lt;float&gt; y(size);
+    thrust::fill(x.begin(), x.end(), 2.0f);
+    thrust::fill(y.begin(), y.end(), 2.0f);
+    float a = 2.f;
+
+    thrust::device_vector&lt;float&gt; d_result(x.size());
+    thrust::transform(x.begin(), x.end(), y.begin(), d_result.begin(), saxpy_fun(a));
+    thrust::host_vector&lt;float&gt; h_result = d_result;
+}
+                </code>
+            </pre>
+        </div>
+        <div class="code">
+            <pre>
+                <code class="language-c">
+// Raptor
+struct saxpy_fun {
+    __device__
+    float operator()(float x, float y, float a) {
+        return a*x + y;
+    }
+};
+
+int main() {
+    int size = 1e6;
+    raptor::vector&lt;float&gt; x(size);
+    raptor::vector&lt;float&gt; y(size);
+    x.fill&lt;DEVICE&gt;(2.f);
+    y.fill&lt;DEVICE&gt;(2.f);
+    float a = 2.f;
+
+    raptor::vector&lt;float&gt; res = map&lt;saxpy_fun&gt;(x,y,a);
+    res.get(0); // read element to download vector
+}
+                </code>
+            </pre>
+        </div>
+    </div>
+
+    <p>
+        As we can see, both implementations have a lot of similarities. The main difference is the lack of host-device memory management when utilizing raptor.
+        In thrust, we must differentiate between host and device vectors, and copy data between them when necessary. Additionally, thrust follows the
+        standard C++ STL syntax in order to express computations (or skeletons). This is of course great for consistency and standardization, but
+        also requires a more verbose syntax. Raptor allows us to express the same computation in a more concise manner.
+    </p>
+
+
     <h2 id="performance">8. Performance</h2>
+
+    <p>
+        We will now see how raptor's performance compares to thrust by analyzing a set of benchmarks that measure the execution times
+        of the saxpy, montecarlo, and mandelbrot algorithms. All of the benchmarks were ran on a machine with the following specification:
+    </p>
+
+    <figure>
+        <table class="raw-table">
+
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td>CPU</td>
+                    <td>AMD Ryzen 7 5700X</td>
+                </tr>
+                <tr>
+                    <td>GPU</td>
+                    <td>RTX 3060 12Gb</td>
+                </tr>
+                <tr>
+                    <td>RAM</td>
+                    <td>32Gb DDR4 @ 3200MHz</td>
+                </tr>
+                <tr>
+                    <td>OS</td>
+                    <td>Ubuntu 22.04.3 LTS</td>
+                </tr>
+                <tr>
+                    <td>Nvidia driver</td>
+                    <td>550.54.15</td>
+                </tr>
+                <tr>
+                    <td>CUDA</td>
+                    <td>12.4</td>
+                </tr>
+                <tr>
+                    <td>g++</td>
+                    <td>11.4.0</td>
+                </tr>        
+            </tbody>
+        </table>
+        <figcaption><b>Tab 1:</b> Experimental setup</figcaption>
+    </figure>
+    </center>
+
+    <p>
+        Each benchmark measures the execution time of an algorithm using as input sizes: <kbd>2^N: N ∈ {10,11,12,...,26}</kbd>.
+        To ensure robustness, each execution underwent 10 iterations, with the average execution time (excluding outliers) serving as the basis
+        for the results. All time measurements were conducted utilizing the standard C++ chrono library. 
+    </p>
+
+    <div class="figcontainer">
+        <figure style="margin: 0">
+            <img src="resources/raptor/saxpy.png" width="350">
+            <figcaption><b>Fig 2</b>: Saxpy benchmark.</figcaption>
+        </figure>
+
+        <figure style="margin: 0">
+            <img src="resources/raptor/montecarlo.png" width="350">
+            <figcaption><b>Fig 3</b>: Montecarlo benchmark.</figcaption>
+        </figure>
+
+        <figure style="margin: 0">
+            <img src="resources/raptor/mandelbrot.png" width="350">
+            <figcaption><b>Fig 4</b>: Mandelbrot benchmark.</figcaption>
+        </figure>
+    </div>
+
+    <p>
+        As we can see in figures 2, 3, and 4, raptor and thrust achieve very similar execution times. In saxpy, thrust achieves slightly faster
+        execution times for large input sizes. In montecarlo, both libraries 
+        demonstrate practically identical execution times. In mandelbrot, raptor  achieves slightly faster execution times for large input sizes.
+        We can conclude that raptor's abstraction doesn't result in any noticeable overheads compared to thrust, and allows for the 
+        development of highly efficient programs.
+    </p>
+
+    <h2 id="conclusions">9. Conclusions</h2>
+
+    <p>
+        Raptor aims to ease the development of efficient parallel applications such that the programmer can focus on the problem related logic rather
+        than constantly dealing with all of CUDA's intricacies. We saw that raptor abstracts all of the host-device communication and allows us
+        to express all computations using skeletons, smart containers and raptor functions. The result is an
+        interface that is both very expressive and more abstract than thrust. Regarding performance, raptor offers almost identical performance to thrust,
+        allowing for extremely efficient programs. 
+        
+        <p>
+            Given that raptor abstracts all CUDA related code, in the future, we would like
+            to offer support for both Nvidia and AMD graphics cards. This can be achieved by isolating the device related code in a CUDA backend module, and
+            replicating this module using <a href="https://github.com/ROCm/HIP">HIP</a>. 
+            This shouldn't pose much difficulty given HIP's similar syntax to CUDA.
+        </p>
+    </p>
 
 </div>
 
