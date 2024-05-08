@@ -53,8 +53,8 @@
             definition, etc. Some higher level libraries, such as thrust, have already simplified and abstracted a lot of
             these concepts, allowing the programmer to focus on the problem related logic, instead of constantly having to deal with all of the GPU intricacies. Even so, we
             believe we can go further. Raptor is a high level algorithmic skeleton CUDA library which allows the user to define all their
-            parallel computations using a set of smart containers, algorithmic skeletons, and raptor functions, while achieving performance 
-            comparable to programs written in thrust.
+            parallel computations using a set of smart containers, algorithmic skeletons, and raptor functions, while achieving very similar performance 
+            as programs written in thrust.
         </p>
 
         <p>
@@ -82,17 +82,15 @@
 
         <p>
             Lets start with one of the most basic parallel programs, saxpy. saxpy is a function that takes as input two vectors of equal size <code>x</code> and <code>y</code>, and
-            a single scalar <code>a</code>, and outputs <code>a*x + y</code>, i.e the output is a vector <code>res</code>, for which <code>res[i] = x[i]*a + y[i]</code>,
+            a single scalar <code>a</code>, and outputs <code>a*x + y</code>, i.e the output is a vector <code>res</code>, such that <code>res[i] = x[i]*a + y[i]</code>,
             for all indices <code>i</code> from <code>0</code> to the size of the vectors.
         </p>
 
         <pre>
             <code class="language-c">
 struct saxpy {
-
     __device__
     float operator()(float x, float y, float a) {
-
         return a*x + y;
     }
 };
@@ -105,7 +103,6 @@ int main() {
     vector&lt;float&gt; y(n);
     x.fill(4.f);
     y.fill(3.f);
-
 
     vector&lt;float&gt; res = map&lt;saxpy&gt;(x,y,a);
 }
@@ -193,12 +190,15 @@ float riemann_sum(int start, int end, int samples) {
         <li><code>map</code>: This skeleton can receive any number of raptor containers of any type (but should have same size), and any number of basic data types. The main type restriction is tied
         to the first parameter which must be a collection (<code>vector</code>, <code>array</code> or <code>vector&lt;array&gt;</code>) dictating the return type.
         Additionally, <code>map</code>
-        receives as a template parameter a device functor describing the mapping function.</li>
+        receives as a template parameter a device functor describing the mapping function. The skeleton returns the container with the mapped values.</li>
         <li><code>filter</code>: This skeleton must receive either a collection and a filtering functor, or two collections of equal size. The first  being the collection to filter, and the second a collection of integers
-        containing <code>0</code>s and <code>1</code>s. A value of <code>0</code> excludes the corresponding element, while a value of <code>1</code> includes the corresponding element.</li>
-        <li><code>reduce</code>: This skeleton must receive a single collection, and receive as a template parameter a device functor describing the reducing function.</li>
-        <li><code>scan</code>: This skeleton must receive a single collection, and receive as a template parameter a device functor describing the scanning function.</li>
-        <li><code>sort</code>: This skeleton must receive a single collection of comparable types.</li>
+        containing <code>0</code>s and <code>1</code>s. A value of <code>0</code> excludes the corresponding element, while a value of <code>1</code> includes the corresponding element.
+        The skeleton returns a container with the filtered set of elements.</li>
+        <li><code>reduce</code>: This skeleton must receive a single collection, and receive as a template parameter a device functor describing the reducing function. The skeleton
+        returns a single reduced value.</li>
+        <li><code>scan</code>: This skeleton must receive a single collection, and receive as a template parameter a device functor describing the scanning function.
+        The skeleton returns a container of equal size containing the scanned values.</li>
+        <li><code>sort</code>: This skeleton must receive a single collection of comparable types, and returns a container with all the elements sorted in ascending order.</li>
     </ul>
 
     <p>
@@ -228,7 +228,7 @@ float riemann_sum(int start, int end, int samples) {
         <p>
             Internally, raptor stores two versions of a collection, a host version, and a device version. Typically, updates are performed on the host and later synchronized to the device.
             However, sometimes containers are never accesses on the host or vice versa. Raptor adopts an optimization such that memory is only allocated whenever it is accessed or
-            manipulated. This means, that a container can be either allocated only on the host, only on the device, on both, or even not allocated at all. For example, in the previous saxpy example,
+            manipulated. This means, that a container can be either allocated only on the host, only on the device, on both, or not allocated at all. For example, in the previous saxpy example,
             we instantiate the vector <code>x</code> using: <code>vector&lt;float&gt; x(n)</code>. This vector is initially not allocated. When we fill (host fill) it with the value <code>4.f</code>,
             the vector is automatically allocated on the host. We then apply the <code>map</code> skeleton over it: 
             <code>map&lt;saxpy&gt;(x,y,a)</code>. This results in the container being automatically allocated on the device. Since the vector was already allocated and dirtied on
@@ -264,7 +264,7 @@ float riemann_sum(int start, int end, int samples) {
     <p>
         GPUs work best when dealing with contiguous data, however, some problems require dynamic data structures that can efficiently mutate. Such data structures can often
         be implemented using multiple fixed size contiguous blocks. For example, a linked list is usually not well suited for a GPU environment, a blocked adjacency list on the
-        other hand, can offer both good memory locality (depending on the size of the blocks), and extensive mutability. For this reason, raptor offers the <code>vector&lt;array&lt;N,T&gt;&gt;</code>
+        other hand, can offer both good memory locality (depending on the size of the blocks) and efficient mutability. For this reason, raptor offers the <code>vector&lt;array&lt;N,T&gt;&gt;</code>
         collection. This collection allows us to define a vector of fixed size arrays that can efficiently grow, shrink, and be updated.
     </p>
 
@@ -291,18 +291,23 @@ float riemann_sum(int start, int end, int samples) {
         transferring the whole vector to the device would require <code>N</code> separate memory transfers, rather than a single large memory transfer
         of <code>N*S*sizeof(T)</code> bytes. Furthermore, by storing a vector of arrays on the host, we gain the ability to track individual dirty arrays.
         When synchronizing the vector of arrays to the device, assuming it has already been allocated, only the dirty arrays need to be
-        synchronized, rather than the entire vector. This targeted synchronization approach enhances efficiency by minimizing unnecessary
-        data transfers. This data structure is defined to use a fine synchronization granularity by default.
+        synchronized, rather than the entire vector. This data structure is defined to use a fine synchronization granularity by default.
+        This targeted synchronization approach enhances efficiency by minimizing unnecessary
+        data transfers.
     </p>
 
     <h2 id="targets">5. Targets</h2>
 
-    Both the <code>copy</code> and <code>fill</code> functions perform heavy operations. For this reason, raptor performs most of these operations
-    asynchronously (the exceptions are host fill with values different than <code>0</code> and host fills using functors). If another operation is 
-    performed on a container that is still performing such an operation, synchronization is automatically insured.
-    Additionally, raptor allows the user to specify the target of these operations. The targets being either the host or the device. The default target
-    is always the host, but it can be overridden via a template parameter. Returning to our saxpy example, we could fill <code>x</code> and <code>y</code>
-    directly on the device using:
+
+    <p>
+        Both the <code>copy</code> and <code>fill</code> functions are resource-intensive tasks. For this reason, raptor performs most of these tasks
+        asynchronously (the exceptions are host fill with values different than <code>0</code> and host fills using functors). 
+        If another operation is applied to a container still undergoing an asynchronous task, synchronization is automatically ensured. Moreover, 
+        raptor offers users the flexibility to specify the target of these tasks as either the host or the device. The default target is the host, but
+        it can be overridden via a template parameter. Returning to our saxpy example, we could fill <code>x</code> and <code>y</code>
+        directly on the device using:
+    
+    </p>
 
     <pre>
         <code class="language-c">
@@ -371,7 +376,7 @@ float pi_montecarlo_estimation(int size) {
     <p>
         To call a raptor function, we simply instantiate it, and call the <code>apply</code> function, passing it all necessary parameters. In this example, 
         in order to compute the estimation of pi, we apply the <code>montecarlo_fun</code>, then
-        sum all the results using the <code>reduce</code> skeleton, and device it by <code>4</code>.
+        sum all the results using the <code>reduce</code> skeleton, and divide it by <code>4</code>.
     </p>
 
     <p>
@@ -381,11 +386,11 @@ float pi_montecarlo_estimation(int size) {
         This allows us to mark any parameter as <code>in</code>, <code>out</code>, or <code>inout</code>. If we don't provide these template parameters,
         all of the function's parameters are handled as input parameters. Since we solely write to the <code>result</code> vector, we mark it as
         <code>out</code>. In case we didn't mark this parameter as an output parameter, and later wanted to access it on the host, we would have to
-        manually mark it as dirty on the device for the proper synchronization to take place. Additionally if <code>result</code> was defaulted to
+        manually mark it as dirty on the device for the proper synchronization to take place. Additionally, if <code>result</code> was defaulted to
         an input parameter, its contents would be uploaded before the function execution. This is of course unnecessary given that we don't read from the
         <code>result</code> container in the function, we only write to it. In practice, regardless of how we mark parameters,
         allocation is always insured automatically, however, an input parameter is additionally uploaded before the execution of the function, and an
-        output parameter is marked as dirty on the device. Output parameters that are later accessed on the host undergo a download.
+        output parameter is marked as dirty on the device. Output parameters that are later accessed on the host undergo the necessary download.
     </p>
 
 
@@ -444,6 +449,7 @@ int main() {
 
     <p>
         To illustrate some of the advantages of utilizing raptor over thrust from a user's standpoint, we compare the implementations of the saxpy algorithm.
+        In this example we assume the programmer wants to specifically access and manipulate the data on the host, but compute the saxpy result on the device.
     </p>
 
 
@@ -468,14 +474,16 @@ struct saxpy_fun : public thrust::binary_function&lt;float,float,float&gt;
 
 int main() {
     int size = 1e6;
-    thrust::device_vector&lt;float&gt; x(size);
-    thrust::device_vector&lt;float&gt; y(size);
-    thrust::fill(x.begin(), x.end(), 2.0f);
-    thrust::fill(y.begin(), y.end(), 2.0f);
+    thrust::host_vector&lt;float&gt; h_x(size);
+    thrust::host_vector&lt;float&gt; h_y(size);
+    thrust::fill(h_x.begin(), h_x.end(), 2.0f);
+    thrust::fill(h_y.begin(), h_y.end(), 2.0f);
     float a = 2.f;
 
+    thrust::device_vector thrust::device_vector&lt;float&gt; d_x = x;
+    thrust::device_vector thrust::device_vector&lt;float&gt; d_y = y;
     thrust::device_vector&lt;float&gt; d_result(x.size());
-    thrust::transform(x.begin(), x.end(), y.begin(), d_result.begin(), saxpy_fun(a));
+    thrust::transform(d_x.begin(), d_x.end(), d_y.begin(), d_result.begin(), saxpy_fun(a));
     thrust::host_vector&lt;float&gt; h_result = d_result;
 }
                 </code>
@@ -496,13 +504,20 @@ int main() {
     int size = 1e6;
     raptor::vector&lt;float&gt; x(size);
     raptor::vector&lt;float&gt; y(size);
-    x.fill&lt;DEVICE&gt;(2.f);
-    y.fill&lt;DEVICE&gt;(2.f);
+    x.fill(2.f);
+    y.fill(2.f);
     float a = 2.f;
 
-    raptor::vector&lt;float&gt; res = map&lt;saxpy_fun&gt;(x,y,a);
+    raptor::vector&lt;float&gt; res = raptor::map&lt;saxpy_fun&gt;(x,y,a);
     res.get(0); // read element to download vector
 }
+
+
+
+
+
+
+
                 </code>
             </pre>
         </div>
