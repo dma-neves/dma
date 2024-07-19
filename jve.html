@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>DMA</title>
+	<link rel="stylesheet" href="styles/main.css" type = "text/css">
+
+
+    <link href="https://fonts.googleapis.com/css2?family=Exo&display=swap" rel="stylesheet">
+
+	<link href="styles/prism.css" rel="stylesheet" />
+
+    <script src="scripts/prism.js"></script>
+    <script src="scripts/main.js"></script>
+
+</head>
+
+<body>
+
+    <div class="content">
+        
+        <h1>Jaap Van Eck - An Overview of his Research and Life</h1>
+        <p>
+            Jul 18, 2024 
+        </p>
+
+        <figure style="margin: 0">
+            <img src="resources/jve/jaap_bw.jpg" width="600">
+        </figure>
+
+        <h2>Index</h2>
+
+        <ul>
+            <li><a href="#introduction">1. Introduction</a></li>
+            <li><a href="#basics">2.Early Life</a></li>
+            <li><a href="#skeletons">3. The Road To Academia</a></li>
+            <li><a href="#collections">4. Atomic Physics</a></li>
+            <li><a href="#targets">5. Conlusions</a></li>
+        </ul>
+
+        <h2 id="introduction">1. Introduction</h2>
+
+        <p>
+            CUDA is a great tool for accelerating massively paralelizable applications on the GPU. However, its utilization can be complex and verbose.
+            Writing programs in plain CUDA involves: management of host and device memory, kernel execution and synchronization, grid and block size 
+            definition, etc. Some higher level libraries, such as thrust, have already simplified and abstracted a lot of
+            these concepts, allowing the programmer to focus on the problem related logic, instead of constantly having to deal with all of the GPU intricacies. Even so, we
+            believe we can go further. Raptor is a high level algorithmic skeleton CUDA library which allows the user to define all their
+            parallel computations using a set of smart containers, algorithmic skeletons, and raptor functions, while achieving very similar performance 
+            as programs written in thrust.
+        </p>
+
+        <p>
+            Raptor's syntax and core design features are taken from <a href="https://docentes.fct.unl.pt/p161/software/marrow-skeleton-framework">marrow</a>.
+            Similarly to marrow, raptor provides a set of smart containers (<code>vector</code>, <code>array</code>, <code>vector&lt;array&gt;</code>, <code>scalar</code>) and skeletons
+            (<code>map</code>, <code>reduce</code>, <code>scan</code>, <code>filter</code>, <code>sort</code>) that can be applied over the smart containers. Containers can store the 
+            data both on the
+            host (CPU) and device (GPU), and expose a seemingly unified memory address space. Skeletons are executed on the device. Any necessary containers are
+            automatically and lazily allocated and uploaded whenever a skeleton is executed. Similarly to marrow,
+            raptor also provides a generic function primitive. A raptor function allows one to specify a generic device function that can operate over
+            multiple raptor containers of different sizes & types, basic data types, and GPU coordinates.
+        </p>
+
+        <p>
+            Raptor was developed as a simplified and lighter weight alternative to marrow (when using a CUDA backend). For complex irregular applications 
+            (complex data-dependencies; lots of potential for communication/computation overlap; nested operations over containers), marrow can potentially achieve better 
+            performance. For more regular and bulk-synchronous applications, raptor can take advantage of a minimal runtime and a more concise code base.
+        </p>
+
+        <p>
+            Before proceeding, note that this guide assumes a basic knowledge of C++ (including functors and basic templates), CUDA, and common high-order functions such as map, filter, reduce, scan.
+        </p>
+
+
+</div>
+
+</body>
+
+</html>
