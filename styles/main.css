@@ -181,3 +181,10 @@ tr:nth-child(even) {
     padding: 10px;
     overflow-x: auto;
 }
+
+/* Added styling for figcaption a */
+figcaption {
+    font-size: 0.95em;
+    color: #777; /* Slightly lighter color */
+    text-decoration: none;
+}
