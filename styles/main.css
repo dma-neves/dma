@@ -188,3 +188,19 @@ figcaption {
     color: #777; /* Slightly lighter color */
     text-decoration: none;
 }
+
+
+.intro-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.intro-image {
+    margin: 0;
+}
+
+.intro-text {
+    max-width: 600px;
+}
