@@ -10,7 +10,7 @@ NAVBAR = `
     <a href="projects.html">Projects</a>
     <a href="posts.html">Blog</a>
     <!--<a href="content.html">Content</a>-->
-    <!--<a href="lists.html">Lists</a>-->
+     <!--<a href="lists.html">Lists</a>-->
     <a href="contacts.html">Contacts</a>
 </nav>
 `;
